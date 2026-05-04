@@ -312,6 +312,78 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
   box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer;
 }
 
+/* ===================== AUTO-COMMENT HINTS ===================== */
+.auto-hint{
+  margin-top:10px;padding:9px 12px;
+  border-radius:8px;background:#f0f9ff;
+  border-left:3px solid var(--teal);
+  display:flex;align-items:flex-start;gap:8px;
+  font-size:12.5px;line-height:1.55;color:var(--text-mid);
+  transition:all .2s ease;
+}
+.auto-hint.band-low   { background:#fff5f5;border-color:var(--red); }
+.auto-hint.band-fair  { background:#fffbeb;border-color:var(--amber); }
+.auto-hint.band-good  { background:#eff6ff;border-color:#3b82f6; }
+.auto-hint.band-excel { background:#f0fdf4;border-color:var(--green); }
+.auto-hint.band-none  { background:#f8f9fb;border-color:var(--border); }
+.hint-badge{
+  display:inline-flex;align-items:center;
+  padding:2px 8px;border-radius:999px;
+  font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;
+  margin-top:1px;
+}
+.band-low   .hint-badge { background:#fecaca;color:#b91c1c; }
+.band-fair  .hint-badge { background:#fde68a;color:#92400e; }
+.band-good  .hint-badge { background:#bfdbfe;color:#1e40af; }
+.band-excel .hint-badge { background:#bbf7d0;color:#14532d; }
+.band-none  .hint-badge { background:var(--cream-dk);color:var(--text-lt); }
+
+/* ===================== FEEDBACK CARD EXTRAS ===================== */
+.feedback-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;flex-wrap:wrap;gap:8px;
+}
+.feedback-label{font-size:13px;font-weight:500;color:var(--text-mid)}
+.auto-preview-box{
+  background:#f0fdf4;border:1.5px solid #86efac;
+  border-radius:var(--radius);padding:12px 14px;
+  margin-bottom:12px;font-size:13px;line-height:1.65;
+  color:#166534;
+}
+.auto-preview-box strong{
+  display:block;font-size:11px;text-transform:uppercase;
+  letter-spacing:.06em;color:#15803d;margin-bottom:6px;
+}
+.auto-preview-criterion{
+  margin-bottom:6px;padding-bottom:6px;
+  border-bottom:1px solid #bbf7d0;
+}
+.auto-preview-criterion:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.auto-preview-criterion .crit-name{font-weight:600;color:#166534;font-size:12px}
+
+/* ===================== REPORT EXTRAS ===================== */
+.srb-auto-comments{
+  background:#eff6ff;border-left:3px solid #3b82f6;
+  border-radius:0 8px 8px 0;padding:10px 14px;
+  font-size:12.5px;color:#1e3a5f;margin-bottom:8px;
+}
+.srb-auto-comments strong{
+  display:block;margin-bottom:6px;
+  font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#1e40af;
+}
+.srb-auto-criterion-comment{
+  display:flex;gap:8px;margin-bottom:5px;padding-bottom:5px;
+  border-bottom:1px solid #bfdbfe;font-size:12.5px;
+}
+.srb-auto-criterion-comment:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.srb-auto-criterion-comment .acrit-name{font-weight:600;min-width:180px;flex-shrink:0;color:#1e40af}
+.srb-auto-criterion-comment .acrit-text{color:#1e3a5f}
+.srb-teacher-comments{
+  background:#fef3c7;border-left:3px solid var(--amber);
+  border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#78350f;
+}
+.srb-teacher-comments strong{display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#92400e}
+
 .comments-card{
   background:#fff;border-radius:var(--radius-lg);
   box-shadow:var(--shadow-sm);border:1px solid var(--border);
@@ -665,7 +737,19 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 
         <div class="comments-card">
           <div class="card-title" style="margin-bottom:12px">💬 Feedback &amp; Comments</div>
-          <textarea id="commentsTextarea" placeholder="Enter detailed feedback for this student's presentation…" oninput="onCommentsChange(this.value)"></textarea>
+          <!-- Auto-comments preview box (hidden until generated) -->
+          <div id="autoPreviewBox" class="auto-preview-box hidden">
+            <strong>✨ Auto-Generated Comments (based on scores)</strong>
+            <div id="autoPreviewContent"></div>
+          </div>
+          <div class="feedback-toolbar">
+            <span class="feedback-label">Teacher's Additional Comments</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-sm btn-ghost" onclick="toggleAutoPreview()" id="previewAutoBtn" title="Preview auto-generated comments">👁 Preview Auto Comments</button>
+              <button class="btn btn-sm btn-teal" onclick="insertAutoComments()" title="Append auto-generated comments to the feedback box">✨ Insert Auto Comments</button>
+            </div>
+          </div>
+          <textarea id="commentsTextarea" placeholder="Enter your own feedback here, or use ✨ Insert Auto Comments to add score-based comments automatically…" oninput="onCommentsChange(this.value)"></textarea>
         </div>
 
         <div class="score-summary">
@@ -983,7 +1067,125 @@ const CRITERIA = [
   { id:'slide_quality', name:'Slide Quality & Visual Appeal',     desc:'Professional design, consistent formatting, and correct use of font sizes and colours. Appropriate balance between text, visuals, and white space.' },
 ];
 
-// ─── FIREBASE CONFIG ───────────────────────────────────────────────────────
+// ─── AUTO-COMMENT BANK ─────────────────────────────────────────────────────
+// Score bands: 0 = not assessed, 1-4 = needs improvement, 5-6 = satisfactory,
+//              7-8 = good, 9-10 = excellent
+const AUTO_COMMENTS = {
+  contribution: {
+    '0':    'Not yet assessed.',
+    '1-4':  'Limited evidence of individual contribution to the content preparation. Significant improvement in original input and research effort is expected.',
+    '5-6':  'Some contribution to content is evident. The student has participated in preparation but could offer more original input and deeper collaborative engagement.',
+    '7-8':  'Good level of individual contribution. The student demonstrated clear involvement in research and content development with evidence of original thinking.',
+    '9-10': 'Excellent contribution to content. Outstanding evidence of original input, thorough research, and strong collaborative effort throughout the project.',
+  },
+  delivery: {
+    '0':    'Not yet assessed.',
+    '1-4':  'Delivery relied heavily on reading from notes or slides. Significant improvement in eye contact and audience engagement is required.',
+    '5-6':  'Some eye contact was maintained but the student occasionally relied on notes. Confidence and fluency can be further developed.',
+    '7-8':  'Confident delivery with good eye contact. The student engaged the audience effectively with minimal reliance on notes.',
+    '9-10': 'Exceptional delivery. Sustained eye contact, confident and fluent articulation, and a consistently engaging presence throughout.',
+  },
+  audibility: {
+    '0':    'Not yet assessed.',
+    '1-4':  'Voice was difficult to hear or understand at times. Significant improvements in volume, pacing, and clarity are required.',
+    '5-6':  'Generally audible, but pacing or pronunciation could be improved for a more polished and professional delivery.',
+    '7-8':  'Clear and audible throughout with appropriate volume and pace suited to the audience and room.',
+    '9-10': 'Exceptional clarity, projection, and pacing. Delivery was highly professional and easy to follow from start to finish.',
+  },
+  technical: {
+    '0':    'Not yet assessed.',
+    '1-4':  'Limited technical understanding was demonstrated. Responses to questions and explanations lacked accuracy or depth.',
+    '5-6':  'Basic understanding of the topic is evident. Some concepts were explained adequately, though greater depth and accuracy are needed.',
+    '7-8':  'Good technical knowledge was displayed. The student explained concepts clearly and accurately with solid command of the subject matter.',
+    '9-10': 'Excellent depth of technical understanding. Concepts were articulated with precision, insight, and a strong command of the subject.',
+  },
+  qa_engagement: {
+    '0':    'Not yet assessed.',
+    '1-4':  'Struggled to engage meaningfully with questions. Responses lacked accuracy, depth, or confidence.',
+    '5-6':  'Attempted to answer questions with partial success. Further preparation and analytical thinking would strengthen performance in Q&A.',
+    '7-8':  'Engaged well with Q&A. Responses were generally accurate, confident, and clear, demonstrating sound analytical thinking.',
+    '9-10': 'Outstanding Q&A engagement. Demonstrated exceptional analytical thinking and responded to all questions with confidence and precision.',
+  },
+  slide_quality: {
+    '0':    'Not yet assessed.',
+    '1-4':  'Slides require significant improvement in design, consistency, formatting, and the balance of text and visuals.',
+    '5-6':  'Slides are functional but would benefit from more consistent formatting and better use of visuals and white space.',
+    '7-8':  'Slides are well-designed with a professional look and appropriate balance of text, visuals, and white space.',
+    '9-10': 'Slides are of outstanding quality — polished, professional, and exemplary in design, layout, and visual communication.',
+  },
+};
+
+function getAutoComment(criteriaId, score) {
+  const bank = AUTO_COMMENTS[criteriaId];
+  if (!bank) return '';
+  if (score === 0)  return bank['0'];
+  if (score <= 4)   return bank['1-4'];
+  if (score <= 6)   return bank['5-6'];
+  if (score <= 8)   return bank['7-8'];
+  return bank['9-10'];
+}
+
+function getScoreBand(score) {
+  if (score === 0) return { cls:'band-none',  label:'Not Assessed' };
+  if (score <= 4)  return { cls:'band-low',   label:'Needs Improvement (1–4)' };
+  if (score <= 6)  return { cls:'band-fair',  label:'Satisfactory (5–6)' };
+  if (score <= 8)  return { cls:'band-good',  label:'Good (7–8)' };
+  return             { cls:'band-excel', label:'Excellent (9–10)' };
+}
+
+function generateAutoCommentsText() {
+  const student = getCurrentStudentObj();
+  if (!student) return '';
+  let lines = ['Auto-generated feedback based on assessment scores:\n'];
+  CRITERIA.forEach(c => {
+    const score = student.assessments?.[c.id] ?? 0;
+    const comment = getAutoComment(c.id, score);
+    lines.push(`• ${c.name} (${score}/10): ${comment}`);
+  });
+  return lines.join('\n');
+}
+
+let _autoPreviewVisible = false;
+
+function toggleAutoPreview() {
+  const box = document.getElementById('autoPreviewBox');
+  _autoPreviewVisible = !_autoPreviewVisible;
+  if (_autoPreviewVisible) {
+    refreshAutoPreview();
+    box.classList.remove('hidden');
+    document.getElementById('previewAutoBtn').textContent = '✕ Hide Auto Comments';
+  } else {
+    box.classList.add('hidden');
+    document.getElementById('previewAutoBtn').textContent = '👁 Preview Auto Comments';
+  }
+}
+
+function refreshAutoPreview() {
+  const student = getCurrentStudentObj();
+  if (!student) return;
+  const contentEl = document.getElementById('autoPreviewContent');
+  contentEl.innerHTML = CRITERIA.map(c => {
+    const score = student.assessments?.[c.id] ?? 0;
+    const { label, cls } = getScoreBand(score);
+    const comment = getAutoComment(c.id, score);
+    const badgeColor = { 'band-low':'#b91c1c','band-fair':'#92400e','band-good':'#1e40af','band-excel':'#14532d','band-none':'#8896a8' }[cls];
+    return `<div class="auto-preview-criterion">
+      <div class="crit-name">${esc(c.name)} — <span style="color:${badgeColor};font-weight:600">${label}</span></div>
+      <div style="font-size:12.5px;color:#166534;margin-top:2px">${esc(comment)}</div>
+    </div>`;
+  }).join('');
+}
+
+function insertAutoComments() {
+  const ta = document.getElementById('commentsTextarea');
+  const existing = ta.value.trim();
+  const autoText = generateAutoCommentsText();
+  ta.value = existing ? existing + '\n\n' + autoText : autoText;
+  onCommentsChange(ta.value);
+  toast('Auto comments inserted ✓', 'success');
+  // also refresh preview if visible
+  if (_autoPreviewVisible) refreshAutoPreview();
+}
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyD2EeORbKoTf8K4mQRZFofeDfwyDdLxIfU",
   authDomain:        "presentation-marking-system.firebaseapp.com",
@@ -1466,6 +1668,11 @@ function startAssessment(unitId, groupIdx, studentIdx) {
   document.getElementById('maxMarksLbl').textContent = appState.totalMarks;
   document.getElementById('commentsTextarea').value = student.comments || '';
 
+  // Reset auto-preview state
+  _autoPreviewVisible = false;
+  document.getElementById('autoPreviewBox').classList.add('hidden');
+  document.getElementById('previewAutoBtn').textContent = '👁 Preview Auto Comments';
+
   renderCriteria(student.assessments || {});
   updateTotalScore(student.assessments || {});
   showView('assessment');
@@ -1475,6 +1682,8 @@ function renderCriteria(assessments) {
   const container = document.getElementById('criteriaContainer');
   container.innerHTML = CRITERIA.map(c => {
     const val = assessments[c.id] ?? 0;
+    const { cls, label } = getScoreBand(val);
+    const comment = getAutoComment(c.id, val);
     return `
     <div class="criteria-item">
       <div class="criteria-item-header">
@@ -1488,6 +1697,10 @@ function renderCriteria(assessments) {
           oninput="onCriteriaChange('${c.id}',this.value)">
         <span class="slider-edge">10</span>
       </div>
+      <div class="auto-hint ${cls}" id="hint_${c.id}">
+        <span class="hint-badge">${label}</span>
+        <span class="hint-text">${esc(comment)}</span>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1495,11 +1708,21 @@ function renderCriteria(assessments) {
 function onCriteriaChange(criteriaId, val) {
   const numVal = parseFloat(val);
   document.getElementById(`score_${criteriaId}`).textContent = `${numVal}/10`;
+  // Update the live auto-comment hint
+  const hintEl = document.getElementById(`hint_${criteriaId}`);
+  if (hintEl) {
+    const { cls, label } = getScoreBand(numVal);
+    const comment = getAutoComment(criteriaId, numVal);
+    hintEl.className = `auto-hint ${cls}`;
+    hintEl.innerHTML = `<span class="hint-badge">${label}</span><span class="hint-text">${esc(comment)}</span>`;
+  }
   const student = getCurrentStudentObj();
   if (!student) return;
   student.assessments = student.assessments || {};
   student.assessments[criteriaId] = numVal;
   updateTotalScore(student.assessments);
+  // Refresh preview if it's open
+  if (_autoPreviewVisible) refreshAutoPreview();
 }
 
 function onCommentsChange(val) {
@@ -1843,6 +2066,30 @@ function studentReportBlock(s) {
     const sc = s.assessments?.[c.id];
     return `<div class="srb-criterion"><span>${esc(c.name)}</span><span>${sc!==undefined?sc+'/10':'—'}</span></div>`;
   }).join('');
+
+  // Build per-criterion auto-comments
+  const hasAnyAssessed = CRITERIA.some(c => s.assessments?.[c.id] !== undefined);
+  let autoCommentsHTML = '';
+  if (hasAnyAssessed) {
+    const rows = CRITERIA.map(c => {
+      const sc = s.assessments?.[c.id];
+      if (sc === undefined) return '';
+      const comment = getAutoComment(c.id, sc);
+      const { label } = getScoreBand(sc);
+      const badgeColor = sc === 0 ? '#8896a8' : sc <= 4 ? '#b91c1c' : sc <= 6 ? '#92400e' : sc <= 8 ? '#1e40af' : '#14532d';
+      return `<div class="srb-auto-criterion-comment">
+        <span class="acrit-name">${esc(c.name)} <span style="font-weight:400;font-size:11px;color:${badgeColor}">(${label})</span></span>
+        <span class="acrit-text">${esc(comment)}</span>
+      </div>`;
+    }).filter(Boolean).join('');
+    autoCommentsHTML = `<div class="srb-auto-comments"><strong>✨ Auto-Generated Feedback (by Criterion)</strong>${rows}</div>`;
+  }
+
+  // Teacher's comments
+  const teacherHTML = s.comments?.trim()
+    ? `<div class="srb-teacher-comments"><strong>💬 Teacher's Feedback</strong>${esc(s.comments)}</div>`
+    : '';
+
   return `
     <div class="student-report-block">
       <div class="srb-header">
@@ -1851,7 +2098,8 @@ function studentReportBlock(s) {
       </div>
       <div class="srb-body">
         <div class="srb-criteria">${criteriaHTML}</div>
-        ${s.comments?.trim()?`<div class="srb-comments"><strong>Feedback</strong>${esc(s.comments)}</div>`:''}
+        ${autoCommentsHTML}
+        ${teacherHTML}
       </div>
     </div>`;
 }
@@ -1933,9 +2181,25 @@ function openTurnitinModal(unitId, groupIdx) {
       preview += '-'.repeat(40)+'\n';
       CRITERIA.forEach(c => {
         const sc = s.assessments?.[c.id];
-        preview += `  ${c.name}: ${sc!==undefined?sc+'/10':'Not assessed'}\n`;
+        preview += `  ${c.name}: ${sc!==undefined?sc+'/10':'Not assessed'}`;
+        if (sc !== undefined) {
+          const { label } = getScoreBand(sc);
+          preview += ` [${label}]`;
+        }
+        preview += '\n';
       });
-      if (s.comments?.trim()) preview += `\nFEEDBACK:\n${s.comments.trim()}\n`;
+      // Auto-generated comments
+      const hasAssessed = CRITERIA.some(c => s.assessments?.[c.id] !== undefined);
+      if (hasAssessed) {
+        preview += '\nAUTO-GENERATED COMMENTS:\n';
+        CRITERIA.forEach(c => {
+          const sc = s.assessments?.[c.id];
+          if (sc !== undefined) {
+            preview += `  ${c.name}: ${getAutoComment(c.id, sc)}\n`;
+          }
+        });
+      }
+      if (s.comments?.trim()) preview += `\nTEACHER FEEDBACK:\n${s.comments.trim()}\n`;
       preview += '\n';
     });
   }
@@ -2054,6 +2318,14 @@ function exportReportHTML() {
     .srb-criterion{display:flex;justify-content:space-between;padding:7px 10px;background:#f8f5ef;border-radius:7px;font-size:13px}
     .srb-comments{background:#fef3c7;border-left:3px solid #e8a020;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#78350f}
     .srb-comments strong{display:block;margin-bottom:3px;font-size:12px;text-transform:uppercase}
+    .srb-auto-comments{background:#eff6ff;border-left:3px solid #3b82f6;border-radius:0 8px 8px 0;padding:10px 14px;font-size:12.5px;color:#1e3a5f;margin-bottom:8px}
+    .srb-auto-comments strong{display:block;margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#1e40af}
+    .srb-auto-criterion-comment{display:flex;gap:8px;margin-bottom:5px;padding-bottom:5px;border-bottom:1px solid #bfdbfe;font-size:12.5px}
+    .srb-auto-criterion-comment:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .acrit-name{font-weight:600;min-width:180px;flex-shrink:0;color:#1e40af}
+    .acrit-text{color:#1e3a5f}
+    .srb-teacher-comments{background:#fef3c7;border-left:3px solid #e8a020;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#78350f}
+    .srb-teacher-comments strong{display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#92400e}
     h3{font-size:1.1rem;margin:20px 0 12px}
   </style></head><body>${content}</body></html>`;
   const blob = new Blob([html],{type:'text/html'});
