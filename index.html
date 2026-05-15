@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -92,6 +93,27 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
   display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:600;color:#fff;
 }
+
+/* ===================== AUTOSAVE INDICATOR ===================== */
+#autosaveIndicator{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;color:rgba(255,255,255,.55);
+  padding:3px 10px;border-radius:999px;
+  background:rgba(255,255,255,.08);
+  transition:all .3s ease;
+  opacity:0;
+}
+#autosaveIndicator.visible{opacity:1}
+#autosaveIndicator.saving{color:var(--amber)}
+#autosaveIndicator.saved{color:#6ee7b7}
+#autosaveIndicator.error{color:#fca5a5}
+.autosave-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:currentColor;
+  animation:none;
+}
+#autosaveIndicator.saving .autosave-dot{animation:pulse .8s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ===================== BUTTONS ===================== */
 .btn{
@@ -274,6 +296,9 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 }
 .criteria-card-header{
   background:var(--navy);padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.criteria-card-header-title{
   font-family:'Playfair Display',serif;
   font-size:1rem;font-weight:600;color:#fff;
 }
@@ -286,9 +311,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
   margin-bottom:6px;
 }
 .criteria-label{font-weight:500;font-size:14px}
-/* FIX #1: class name was 'criteria-score' in JS but only 'criteria-value' in CSS.
-   Defining both so the assessment score numbers render styled. */
-.criteria-value, .criteria-score{
+.criteria-value,.criteria-score{
   font-family:'Playfair Display',serif;
   font-size:1.3rem;font-weight:600;color:var(--teal);
   min-width:60px;text-align:right;
@@ -562,15 +585,62 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
   font-size:1.1rem;margin-bottom:14px;
   color:var(--text-dark);
 }
+
+/* Unit settings panel — collapsible accordion */
+.unit-settings-list{}
+.unit-settings-item{
+  border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:10px;overflow:hidden;
+}
+.unit-settings-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;background:var(--cream);cursor:pointer;
+  user-select:none;transition:.15s;
+}
+.unit-settings-header:hover{background:var(--cream-dk)}
+.unit-settings-header-left{display:flex;align-items:center;gap:10px}
+.unit-settings-badge{
+  font-size:11px;font-weight:600;padding:2px 8px;
+  border-radius:999px;background:var(--navy);color:#fff;
+}
+.unit-settings-header-name{font-size:14px;font-weight:600;color:var(--text-dark)}
+.unit-settings-header-meta{font-size:12px;color:var(--text-lt);margin-top:1px}
+.unit-settings-toggle{
+  font-size:16px;color:var(--text-lt);
+  transition:transform .2s;
+}
+.unit-settings-item.open .unit-settings-toggle{transform:rotate(90deg)}
+.unit-settings-body{
+  display:none;padding:16px;border-top:1px solid var(--border);
+  background:#fff;
+}
+.unit-settings-item.open .unit-settings-body{display:block}
+
+/* Marks input inline */
+.marks-row{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:16px;padding:12px 14px;
+  background:var(--cream);border-radius:var(--radius);
+}
+.marks-row label{font-size:13px;font-weight:500;color:var(--text-mid);flex:1}
+.marks-input-sm{
+  width:80px;padding:6px 10px;
+  border:1.5px solid var(--border);border-radius:8px;
+  font-size:14px;font-weight:600;text-align:center;
+  color:var(--text-dark);background:#fff;
+}
+.marks-input-sm:focus{outline:none;border-color:var(--teal)}
+
+/* CSV upload per unit */
 .csv-drop-zone{
   border:2px dashed var(--border);border-radius:var(--radius);
-  padding:28px;text-align:center;cursor:pointer;
-  transition:.15s;color:var(--text-mid);font-size:14px;
+  padding:22px;text-align:center;cursor:pointer;
+  transition:.15s;color:var(--text-mid);font-size:13.5px;
 }
 .csv-drop-zone:hover,.csv-drop-zone.drag-over{
   border-color:var(--teal);background:#f0fdfb;color:var(--teal);
 }
-.csv-drop-zone svg{display:block;margin:0 auto 10px;opacity:.5}
+.csv-drop-zone svg{display:block;margin:0 auto 8px;opacity:.5}
 .roster-table{width:100%;border-collapse:collapse;font-size:13.5px}
 .roster-table th{
   background:var(--navy);color:#fff;
@@ -580,7 +650,18 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .roster-table td{padding:9px 14px;border-bottom:1px solid var(--cream-dk);color:var(--text-dark)}
 .roster-table tr:last-child td{border-bottom:none}
 .roster-table tr:hover td{background:var(--cream)}
-.roster-wrap{max-height:300px;overflow-y:auto;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.roster-wrap{max-height:240px;overflow-y:auto;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+
+/* Global roster fallback (in settings) */
+.global-roster-section{
+  border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;margin-top:12px;
+}
+.global-roster-header{
+  background:var(--cream-dk);padding:10px 14px;
+  font-size:13px;font-weight:600;color:var(--text-mid);
+  display:flex;align-items:center;justify-content:space-between;
+}
 
 /* ===================== LOADING ===================== */
 .loading-screen{
@@ -675,6 +756,11 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
       <div class="dot">■</div> PresentMark
     </div>
     <div class="topbar-right">
+      <!-- Auto-save indicator (assessment view only) -->
+      <div id="autosaveIndicator">
+        <span class="autosave-dot"></span>
+        <span id="autosaveText">Saving…</span>
+      </div>
       <button class="btn btn-ghost btn-sm" onclick="showView('settings')" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">⚙ Settings</button>
       <button class="btn btn-ghost btn-sm" onclick="showView('reports')" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)">📊 Reports</button>
       <div class="teacher-badge">
@@ -726,18 +812,20 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn btn-ghost" onclick="showView('units')">← Back</button>
-            <button class="btn btn-green" id="saveAssessmentBtn" onclick="saveAssessment()">💾 Save Assessment</button>
           </div>
         </div>
 
         <div class="criteria-card">
-          <div class="criteria-card-header">Assessment Criteria</div>
+          <div class="criteria-card-header">
+            <span class="criteria-card-header-title">Assessment Criteria</span>
+            <span id="assessAutoSaveStatus" style="font-size:12px;color:rgba(255,255,255,.55)"></span>
+          </div>
           <div id="criteriaContainer"></div>
         </div>
 
         <div class="comments-card">
           <div class="card-title" style="margin-bottom:12px">💬 Feedback &amp; Comments</div>
-          <!-- Auto-comments preview box (hidden until generated) -->
+          <!-- Auto-comments preview box -->
           <div id="autoPreviewBox" class="auto-preview-box hidden">
             <strong>✨ Auto-Generated Comments (based on scores)</strong>
             <div id="autoPreviewContent"></div>
@@ -820,7 +908,7 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
   <!-- ===== SETTINGS VIEW ===== -->
   <div id="settingsView" class="hidden">
     <div class="app-content">
-      <div class="container" style="max-width:640px">
+      <div class="container" style="max-width:720px">
         <div class="breadcrumb">
           <a href="#" onclick="showView('units');return false">Units</a>
           <span class="breadcrumb-sep">›</span> Settings
@@ -830,56 +918,49 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
           <button class="btn btn-ghost" onclick="showView('units')">← Back</button>
         </div>
 
-        <!-- Scoring -->
+        <!-- ── Per-Unit Settings (Marks + Roster) ── -->
         <div class="card settings-section">
-          <div class="settings-section-title">Scoring</div>
-          <div class="form-group">
-            <label class="form-label">Maximum Mark</label>
-            <input class="form-input" type="number" id="maxMarksInput" min="1" max="100" value="10" onchange="saveMaxMarks(this.value)">
-            <p class="form-help">The final score is the average of all criteria, scaled to this value.</p>
-          </div>
+          <div class="settings-section-title">📚 Unit Settings</div>
+          <p style="font-size:13.5px;color:var(--text-mid);margin-bottom:16px;line-height:1.6">
+            Each unit has its own maximum mark and student roster. Expand a unit below to configure it.
+          </p>
+          <div id="unitSettingsList" class="unit-settings-list"></div>
+          <button class="btn btn-teal btn-sm" style="margin-top:12px" onclick="openCreateUnitModal()">+ Add Unit</button>
         </div>
 
-        <!-- Student Roster CSV -->
+        <!-- ── Global Fallback Roster ── -->
         <div class="card settings-section">
-          <div class="settings-section-title">📋 Student Roster (CSV Upload)</div>
+          <div class="settings-section-title">🌐 Global Student Roster</div>
           <p style="font-size:13.5px;color:var(--text-mid);margin-bottom:14px;line-height:1.6">
-            Upload a CSV with columns <strong>Name</strong> and <strong>StudentID</strong>. These students will appear in the picker when you create groups.<br>
-            <em>Example row: Jane Smith, s1234567</em>
+            A global roster available across all units when picking students for groups. You can also upload unit-specific rosters above.<br>
+            <em>CSV must have columns <strong>Name</strong> and <strong>StudentID</strong>.</em>
           </p>
-          <div class="csv-drop-zone" id="csvDropZone" onclick="document.getElementById('csvFileInput').click()" ondragover="csvDragOver(event)" ondragleave="csvDragLeave(event)" ondrop="csvDrop(event)">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="csv-drop-zone" id="globalCsvDropZone"
+            onclick="document.getElementById('globalCsvFileInput').click()"
+            ondragover="globalCsvDragOver(event)" ondragleave="globalCsvDragLeave(event)" ondrop="globalCsvDrop(event)">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Click to upload CSV or drag &amp; drop here
           </div>
-          <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCsvFile(this)">
-          <div id="rosterSection" class="hidden" style="margin-top:16px">
+          <input type="file" id="globalCsvFileInput" accept=".csv" style="display:none" onchange="handleGlobalCsvFile(this)">
+          <div id="globalRosterSection" class="hidden" style="margin-top:16px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-              <p class="form-help" id="rosterCountLbl"></p>
-              <button class="btn btn-red btn-sm" onclick="clearRoster()">Clear Roster</button>
+              <p class="form-help" id="globalRosterCountLbl"></p>
+              <button class="btn btn-red btn-sm" onclick="clearGlobalRoster()">Clear Global Roster</button>
             </div>
             <div class="roster-wrap">
-              <table class="roster-table" id="rosterTable">
+              <table class="roster-table" id="globalRosterTable">
                 <thead><tr><th>#</th><th>Name</th><th>Student ID</th></tr></thead>
-                <tbody id="rosterBody"></tbody>
+                <tbody id="globalRosterBody"></tbody>
               </table>
             </div>
           </div>
         </div>
 
-        <!-- Units management -->
-        <div class="card settings-section">
-          <div class="settings-section-title">Manage Units</div>
-          <div id="unitsManagementList"></div>
-          <button class="btn btn-teal btn-sm" style="margin-top:12px" onclick="openCreateUnitModal()">+ Add Unit</button>
-        </div>
-
-        <!-- Account -->
+        <!-- ── Account ── -->
         <div class="card settings-section">
           <div class="settings-section-title">Account</div>
           <p style="font-size:13.5px;color:var(--text-mid);margin-bottom:12px">Signed in as <strong id="settingsEmail"></strong></p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn btn-red btn-sm" onclick="signOut()">Sign Out</button>
-          </div>
         </div>
       </div>
     </div>
@@ -906,6 +987,11 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
       <div class="form-group">
         <label class="form-label">Unit Code (optional)</label>
         <input class="form-input" id="unitCodeInput" placeholder="e.g. COMM101">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Maximum Mark</label>
+        <input class="form-input" type="number" id="unitMaxMarksInput" min="1" max="100" value="10">
+        <p class="form-help">Scores are averaged across all criteria and scaled to this value.</p>
       </div>
     </div>
     <div class="modal-footer">
@@ -995,63 +1081,38 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 <!-- ===================== MAIN SCRIPT ===================== -->
 <script>
 /* =========================================================================
-   BUG FIXES SUMMARY
-   -------------------------------------------------------------------------
-   1.  CRITICAL — createUnit() (and most other Firestore writes) had NO
-       try/catch. If Firestore rejected the write (e.g. permission rules,
-       network offline, expired auth token) the promise rejected silently,
-       the modal stayed open, and the user saw nothing. This is the #1
-       reason "unit creation is not working". All Firestore writes are now
-       wrapped with try/catch and surface the real error in a toast and
-       in the browser console.
-   2.  CSS class mismatch: assessment scores were rendered with
-       class "criteria-score", but the stylesheet only defined
-       ".criteria-value" — so the score number was unstyled. Both class
-       names are now defined to match.
-   3.  CSV header detection: a column called "Student Name" matched both
-       the name-finder (`includes('name')`) AND the id-finder
-       (`includes('student')`), causing both to point at column 0 and
-       overwrite the studentId field with the name. The id-finder is
-       now stricter and refuses to pick the same column as the name.
-   4.  CSV file <input> was not reset after upload, so re-uploading the
-       same file did not fire the change event. It is reset now.
-   5.  CSV parser did not handle escaped double-quotes ("") inside quoted
-       fields. Now handled.
-   6.  Slider initial value of 0 was not recorded as "assessed" because
-       the input event only fires on change. The initial assessments map
-       is now seeded with the current slider values when the assessment
-       view opens, so a deliberate score of 0 is saveable.
-   7.  Empty state was misleading when no units existed — it told the
-       user to create a "group" but groups need a unit first. The empty
-       state now correctly prompts to create a unit when none exist.
-   8.  saveMaxMarks did not handle Firestore failures.
-   9.  Re-entrancy: rapid double-clicks could submit the create-unit /
-       create-group / add-student forms twice. Submit buttons are now
-       disabled while the request is in flight.
-   10. Pressing Enter in modal inputs now submits the form's primary
-       action (previously had to click).
-   11. Pressing Escape now closes any open modal.
-   12. Stale appState after Firestore failure: createGroup() pushed the
-       new group to local state BEFORE the await; if the write failed,
-       local state diverged from server. Now we only mutate local state
-       AFTER a successful write.
-   13. renderOverviewReport averaged scores including unassessed students
-       (they contributed 0), dragging the average down. Now only counts
-       students with at least one rating.
-   14. getReportData crashed if a stale group index was passed in
-       (e.g. after a deletion). Now defensive against undefined groups.
-   15. Several small defensive guards (no currentUser when called, etc.)
+   CHANGELOG (additions to original)
+   ─────────────────────────────────────────────────────────────────────────
+   NEW FEATURE 1 — Unit-wise Settings
+     • Each unit now stores its own `totalMarks` (default 10).
+     • Settings view renders an accordion per unit with a marks input.
+     • `calcScore()` and score display now use the unit's own `totalMarks`.
+     • `getUnitMarks(unitId)` helper used everywhere.
+
+   NEW FEATURE 2 — Unit-wise Student Roster
+     • Each unit stores a `roster` array in Firestore alongside `groups`.
+     • Settings view accordion includes a per-unit CSV uploader + roster table.
+     • Group picker merges unit-roster + global-roster (de-duplicated by studentId,
+       preferring the unit-specific entry).
+     • Global roster (previous behaviour) is retained as a fallback.
+
+   NEW FEATURE 3 — Auto-Save Assessment on Criteria Change
+     • Slider `oninput` triggers a debounced (1 400 ms) Firestore write.
+     • An autosave indicator in the topbar shows Saving / Saved / Error.
+     • The manual "Save Assessment" button is removed (save is always automatic).
+     • Comments textarea also triggers the same debounced save.
+
+   All original bug-fixes from the previous version are retained.
    ========================================================================= */
 
 // ─── GLOBALS ───────────────────────────────────────────────────────────────
 let db, auth, currentUser;
 let appState = {
   units: [],
-  roster: [],
+  globalRoster: [],       // global fallback roster
   selectedUnitId: null,
   selectedGroup: null,
   selectedStudent: null,
-  totalMarks: 10,
   currentView: 'units',
   pickerSelected: new Set(),
   addStudentTarget: null,
@@ -1059,17 +1120,15 @@ let appState = {
 };
 
 const CRITERIA = [
-  { id:'contribution',  name:'Contribution to Content',           desc:'Level of individual contribution to preparing the PowerPoint slides and the written report. Evidence of original input, research, and collaborative effort.' },
-  { id:'delivery',      name:'Presentation Delivery',             desc:'Maintaining eye contact with the audience (avoiding reading directly from mobile devices or the slides). Clear articulation and confident delivery without over-reliance on notes.' },
-  { id:'audibility',    name:'Audibility & Clarity',              desc:'Voice volume, tone, and clarity suitable for the audience and room size. Effective pacing and pronunciation.' },
-  { id:'technical',     name:'Technical Knowledge & Understanding',desc:'Depth of understanding of the project topic. Ability to explain concepts clearly and accurately.' },
-  { id:'qa_engagement', name:'Engagement in Q&A Session',         desc:'Ability to answer questions accurately, confidently, and concisely. Demonstrating analytical thinking when responding to unexpected questions.' },
-  { id:'slide_quality', name:'Slide Quality & Visual Appeal',     desc:'Professional design, consistent formatting, and correct use of font sizes and colours. Appropriate balance between text, visuals, and white space.' },
+  { id:'contribution',  name:'Contribution to Content',            desc:'Level of individual contribution to preparing the PowerPoint slides and the written report. Evidence of original input, research, and collaborative effort.' },
+  { id:'delivery',      name:'Presentation Delivery',              desc:'Maintaining eye contact with the audience (avoiding reading directly from mobile devices or the slides). Clear articulation and confident delivery without over-reliance on notes.' },
+  { id:'audibility',    name:'Audibility & Clarity',               desc:'Voice volume, tone, and clarity suitable for the audience and room size. Effective pacing and pronunciation.' },
+  { id:'technical',     name:'Technical Knowledge & Understanding', desc:'Depth of understanding of the project topic. Ability to explain concepts clearly and accurately.' },
+  { id:'qa_engagement', name:'Engagement in Q&A Session',          desc:'Ability to answer questions accurately, confidently, and concisely. Demonstrating analytical thinking when responding to unexpected questions.' },
+  { id:'slide_quality', name:'Slide Quality & Visual Appeal',      desc:'Professional design, consistent formatting, and correct use of font sizes and colours. Appropriate balance between text, visuals, and white space.' },
 ];
 
 // ─── AUTO-COMMENT BANK ─────────────────────────────────────────────────────
-// Score bands: 0 = not assessed, 1-4 = needs improvement, 5-6 = satisfactory,
-//              7-8 = good, 9-10 = excellent
 const AUTO_COMMENTS = {
   contribution: {
     '0':    'Not yet assessed.',
@@ -1139,8 +1198,7 @@ function generateAutoCommentsText() {
   let lines = ['Auto-generated feedback based on assessment scores:\n'];
   CRITERIA.forEach(c => {
     const score = student.assessments?.[c.id] ?? 0;
-    const comment = getAutoComment(c.id, score);
-    lines.push(`• ${c.name} (${score}/10): ${comment}`);
+    lines.push(`• ${c.name} (${score}/10): ${getAutoComment(c.id, score)}`);
   });
   return lines.join('\n');
 }
@@ -1183,9 +1241,10 @@ function insertAutoComments() {
   ta.value = existing ? existing + '\n\n' + autoText : autoText;
   onCommentsChange(ta.value);
   toast('Auto comments inserted ✓', 'success');
-  // also refresh preview if visible
   if (_autoPreviewVisible) refreshAutoPreview();
 }
+
+// ─── FIREBASE CONFIG ────────────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyD2EeORbKoTf8K4mQRZFofeDfwyDdLxIfU",
   authDomain:        "presentation-marking-system.firebaseapp.com",
@@ -1274,56 +1333,32 @@ function showAuthError(msg) {
 
 function friendlyAuthError(e) {
   switch(e.code) {
-    case 'auth/user-not-found': return 'No account found with that email.';
-    case 'auth/wrong-password': return 'Incorrect password.';
-    case 'auth/invalid-credential': return 'Invalid email or password.';
-    case 'auth/email-already-in-use': return 'That email is already registered.';
-    case 'auth/weak-password': return 'Password must be at least 6 characters.';
-    case 'auth/invalid-email': return 'Please enter a valid email address.';
+    case 'auth/user-not-found':      return 'No account found with that email.';
+    case 'auth/wrong-password':      return 'Incorrect password.';
+    case 'auth/invalid-credential':  return 'Invalid email or password.';
+    case 'auth/email-already-in-use':return 'That email is already registered.';
+    case 'auth/weak-password':       return 'Password must be at least 6 characters.';
+    case 'auth/invalid-email':       return 'Please enter a valid email address.';
     case 'auth/network-request-failed': return 'Network error. Check your internet connection.';
-    case 'auth/too-many-requests': return 'Too many attempts. Try again in a few minutes.';
+    case 'auth/too-many-requests':   return 'Too many attempts. Try again in a few minutes.';
     default: return e.message || 'Sign-in failed. Please try again.';
   }
 }
 
 async function signOut() {
-  try {
-    await auth.signOut();
-  } catch(e) {
-    console.error('signOut error:', e);
-  }
-  // onAuthStateChanged will swap the screens
+  try { await auth.signOut(); } catch(e) { console.error('signOut error:', e); }
 }
 
 // ─── APP START ─────────────────────────────────────────────────────────────
 async function startApp(user) {
   hideAll(); show('appScreen');
-
   const name = user.displayName || user.email;
   document.getElementById('teacherName').textContent = name.split(' ')[0] || name;
   document.getElementById('teacherAvatar').textContent = (name[0]||'T').toUpperCase();
   document.getElementById('settingsEmail').textContent = user.email;
 
-  // Load settings
-  try {
-    const settingsDoc = await db.doc(`users/${user.uid}/meta/settings`).get();
-    if (settingsDoc.exists) {
-      appState.totalMarks = settingsDoc.data().totalMarks || 10;
-    } else {
-      // First login w/o settings doc — create one
-      await db.doc(`users/${user.uid}/meta/settings`).set({
-        totalMarks: 10,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-  } catch(e) {
-    console.warn('Settings load failed:', e);
-  }
-  document.getElementById('maxMarksInput').value = appState.totalMarks;
-
-  await loadRoster();
+  await loadGlobalRoster();
   await loadUnits();
-
   renderUnitsNav();
   renderGroups();
   showView('units');
@@ -1334,14 +1369,18 @@ function uid() {
   if (!currentUser) throw new Error('Not signed in.');
   return currentUser.uid;
 }
-function unitsRef()  { return db.collection(`users/${uid()}/units`); }
-function rosterRef() { return db.collection(`users/${uid()}/roster`); }
-function settingsRef(){ return db.doc(`users/${uid()}/meta/settings`); }
+function unitsRef()      { return db.collection(`users/${uid()}/units`); }
+function globalRosterRef(){ return db.collection(`users/${uid()}/roster`); }
 
 async function loadUnits() {
   try {
     const snap = await unitsRef().orderBy('createdAt','asc').get();
-    appState.units = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    appState.units = snap.docs.map(d => ({
+      id: d.id,
+      totalMarks: 10,   // default; overwritten by stored value below
+      roster: [],
+      ...d.data()
+    }));
     if (!appState.selectedUnitId && appState.units.length)
       appState.selectedUnitId = appState.units[0].id;
   } catch(e) {
@@ -1351,43 +1390,36 @@ async function loadUnits() {
   }
 }
 
-async function loadRoster() {
+async function loadGlobalRoster() {
   try {
-    const snap = await rosterRef().orderBy('name','asc').get();
-    appState.roster = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const snap = await globalRosterRef().orderBy('name','asc').get();
+    appState.globalRoster = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch(e) {
-    console.error('loadRoster failed:', e);
-    toast('Could not load roster: ' + e.message, 'error');
-    appState.roster = [];
+    console.error('loadGlobalRoster failed:', e);
+    appState.globalRoster = [];
   }
-  renderRosterTable();
+  renderGlobalRosterTable();
 }
 
-async function saveMaxMarks(val) {
-  const n = parseInt(val);
-  if (isNaN(n)||n<1||n>100) { toast('Enter a number between 1 and 100','error'); return; }
-  appState.totalMarks = n;
-  document.getElementById('maxMarksLbl').textContent = n;
-  try {
-    await settingsRef().set({ totalMarks: n }, { merge: true });
-    toast('Marks updated');
-  } catch(e) {
-    console.error('saveMaxMarks failed:', e);
-    toast('Could not save: ' + e.message, 'error');
-  }
+// ─── UNIT MARKS HELPER ─────────────────────────────────────────────────────
+function getUnitMarks(unitId) {
+  const u = appState.units.find(u => u.id === unitId);
+  return u?.totalMarks ?? 10;
 }
 
 // ─── UNITS ─────────────────────────────────────────────────────────────────
 function openCreateUnitModal() {
-  document.getElementById('unitNameInput').value = '';
-  document.getElementById('unitCodeInput').value = '';
+  document.getElementById('unitNameInput').value  = '';
+  document.getElementById('unitCodeInput').value  = '';
+  document.getElementById('unitMaxMarksInput').value = 10;
   openModal('unitModal');
   setTimeout(() => document.getElementById('unitNameInput').focus(), 50);
 }
 
 async function createUnit() {
-  const name = v('unitNameInput').trim();
-  const code = v('unitCodeInput').trim();
+  const name      = v('unitNameInput').trim();
+  const code      = v('unitCodeInput').trim();
+  const maxMarks  = parseInt(v('unitMaxMarksInput')) || 10;
   if (!name) { toast('Unit name required','error'); return; }
   if (!currentUser) { toast('You are signed out. Please sign in again.','error'); return; }
 
@@ -1397,25 +1429,23 @@ async function createUnit() {
   try {
     const ref = await unitsRef().add({
       name, code,
+      totalMarks: maxMarks,
       groups: [],
+      roster: [],
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    appState.units.push({ id: ref.id, name, code, groups: [] });
+    appState.units.push({ id: ref.id, name, code, totalMarks: maxMarks, groups: [], roster: [] });
     appState.selectedUnitId = ref.id;
     closeModal('unitModal');
-    document.getElementById('unitNameInput').value = '';
-    document.getElementById('unitCodeInput').value = '';
     renderUnitsNav();
     renderGroups();
-    renderUnitsManagement();
-    toast('Unit created','success');
+    renderUnitSettings();
+    toast('Unit created', 'success');
   } catch(e) {
     console.error('createUnit failed:', e);
     let msg = e.message || 'Unknown error';
-    if (e.code === 'permission-denied')
-      msg = 'Permission denied. Your Firestore security rules block this write.';
-    else if (e.code === 'unavailable')
-      msg = 'Firestore is unreachable. Check your internet connection.';
+    if (e.code === 'permission-denied') msg = 'Permission denied. Check your Firestore security rules.';
+    else if (e.code === 'unavailable')  msg = 'Firestore is unreachable. Check your internet connection.';
     toast('Could not create unit: ' + msg, 'error');
   } finally {
     btn.disabled = false;
@@ -1425,13 +1455,13 @@ async function createUnit() {
 async function deleteUnit(unitId) {
   const u = appState.units.find(u=>u.id===unitId);
   if (!u) return;
-  if (!confirm(`Delete unit "${u.name}"? All groups and assessments will be removed.`)) return;
+  if (!confirm(`Delete unit "${u.name}"? All groups, assessments and this unit's roster will be removed.`)) return;
   try {
     await unitsRef().doc(unitId).delete();
     appState.units = appState.units.filter(u=>u.id!==unitId);
     if (appState.selectedUnitId === unitId)
       appState.selectedUnitId = appState.units[0]?.id || null;
-    renderUnitsNav(); renderGroups(); renderUnitsManagement();
+    renderUnitsNav(); renderGroups(); renderUnitSettings();
     toast('Unit deleted');
   } catch(e) {
     console.error('deleteUnit failed:', e);
@@ -1448,11 +1478,28 @@ function getCurrentUnit() {
   return appState.units.find(u=>u.id===appState.selectedUnitId);
 }
 
+// Save unit-level max marks
+async function saveUnitMarks(unitId, val) {
+  const n = parseInt(val);
+  if (isNaN(n)||n<1||n>100) { toast('Enter a number between 1 and 100','error'); return; }
+  const u = appState.units.find(u=>u.id===unitId);
+  if (!u) return;
+  u.totalMarks = n;
+  try {
+    await unitsRef().doc(unitId).update({ totalMarks: n });
+    toast(`Max marks set to ${n} for "${u.name}"`, 'success');
+    renderGroups(); // refresh score pills
+  } catch(e) {
+    console.error('saveUnitMarks failed:', e);
+    toast('Could not save: ' + e.message, 'error');
+  }
+}
+
 // ─── GROUPS ────────────────────────────────────────────────────────────────
 function openCreateGroupModal() {
   if (!getCurrentUnit()) { toast('Create a unit first','error'); return; }
   appState.pickerSelected = new Set();
-  document.getElementById('groupNameInput').value = '';
+  document.getElementById('groupNameInput').value  = '';
   document.getElementById('groupPickerSearch').value = '';
   renderGroupPicker('');
   updateGroupPickerCount();
@@ -1466,16 +1513,16 @@ async function createGroup() {
   const unit = getCurrentUnit();
   if (!unit) { toast('No unit selected','error'); return; }
 
-  const students = appState.roster
+  // Merged roster for this unit
+  const merged = getMergedRoster(unit.id);
+  const students = merged
     .filter(r => appState.pickerSelected.has(r.id))
     .map(r => ({ id: r.id, name: r.name, studentId: r.studentId, assessments:{}, comments:'' }));
 
   const btn = document.getElementById('createGroupBtn');
   btn.disabled = true;
 
-  // FIX #12: build the new groups array WITHOUT mutating local state until
-  // the server write succeeds.
-  const newGroup = { id: `g_${Date.now()}`, name, students };
+  const newGroup  = { id: `g_${Date.now()}`, name, students };
   const newGroups = [...(unit.groups || []), newGroup];
 
   try {
@@ -1485,7 +1532,7 @@ async function createGroup() {
     document.getElementById('groupNameInput').value = '';
     appState.pickerSelected = new Set();
     renderGroups();
-    toast('Group created','success');
+    toast('Group created', 'success');
   } catch(e) {
     console.error('createGroup failed:', e);
     toast('Could not create group: ' + e.message, 'error');
@@ -1500,7 +1547,7 @@ async function deleteGroup(unitId, groupIdx) {
   const g = unit.groups[groupIdx];
   if (!g) return;
   if (!confirm(`Delete group "${g.name}"? All assessments will be lost.`)) return;
-  const newGroups = unit.groups.filter((_, i) => i !== groupIdx);
+  const newGroups = unit.groups.filter((_,i)=>i!==groupIdx);
   try {
     await unitsRef().doc(unitId).update({ groups: newGroups });
     unit.groups = newGroups;
@@ -1512,11 +1559,10 @@ async function deleteGroup(unitId, groupIdx) {
   }
 }
 
-// Add students to existing group
 function openAddStudentModal(unitId, groupIdx) {
   appState.addStudentTarget = { unitId, groupIdx };
   appState.addStudentSelected = new Set();
-  const unit = appState.units.find(u=>u.id===unitId);
+  const unit  = appState.units.find(u=>u.id===unitId);
   const group = unit?.groups[groupIdx];
   document.getElementById('addStudentModalTitle').textContent = `Add Students — ${group?.name||''}`;
   document.getElementById('addStudentSearch').value = '';
@@ -1529,12 +1575,13 @@ async function addStudentsToGroup() {
   const target = appState.addStudentTarget;
   if (!target) return;
   const { unitId, groupIdx } = target;
-  const unit = appState.units.find(u=>u.id===unitId);
+  const unit  = appState.units.find(u=>u.id===unitId);
   const group = unit?.groups[groupIdx];
   if (!group) { toast('Group no longer exists','error'); return; }
 
   const existing = new Set(group.students.map(s=>s.id));
-  const toAdd = appState.roster
+  const merged   = getMergedRoster(unitId);
+  const toAdd    = merged
     .filter(r => appState.addStudentSelected.has(r.id) && !existing.has(r.id))
     .map(r => ({ id: r.id, name: r.name, studentId: r.studentId, assessments:{}, comments:'' }));
   if (!toAdd.length) { toast('No new students selected','error'); return; }
@@ -1543,14 +1590,14 @@ async function addStudentsToGroup() {
   btn.disabled = true;
 
   const newStudents = [...group.students, ...toAdd];
-  const newGroups = unit.groups.map((g, i) => i === groupIdx ? {...g, students: newStudents} : g);
+  const newGroups   = unit.groups.map((g,i) => i===groupIdx ? {...g, students:newStudents} : g);
 
   try {
     await unitsRef().doc(unitId).update({ groups: newGroups });
     unit.groups = newGroups;
     closeModal('addStudentModal');
     renderGroups();
-    toast(`${toAdd.length} student(s) added`,'success');
+    toast(`${toAdd.length} student(s) added`, 'success');
   } catch(e) {
     console.error('addStudentsToGroup failed:', e);
     toast('Could not add students: ' + e.message, 'error');
@@ -1560,14 +1607,14 @@ async function addStudentsToGroup() {
 }
 
 async function removeStudentFromGroup(unitId, groupIdx, studentIdx) {
-  const unit = appState.units.find(u=>u.id===unitId);
+  const unit  = appState.units.find(u=>u.id===unitId);
   const group = unit?.groups[groupIdx];
   if (!group) return;
   const s = group.students[studentIdx];
   if (!s) return;
   if (!confirm(`Remove "${s.name}" from this group?`)) return;
-  const newStudents = group.students.filter((_, i) => i !== studentIdx);
-  const newGroups = unit.groups.map((g, i) => i === groupIdx ? {...g, students: newStudents} : g);
+  const newStudents = group.students.filter((_,i)=>i!==studentIdx);
+  const newGroups   = unit.groups.map((g,i) => i===groupIdx ? {...g, students:newStudents} : g);
   try {
     await unitsRef().doc(unitId).update({ groups: newGroups });
     unit.groups = newGroups;
@@ -1579,15 +1626,37 @@ async function removeStudentFromGroup(unitId, groupIdx, studentIdx) {
   }
 }
 
+// ─── MERGED ROSTER HELPER ──────────────────────────────────────────────────
+// Returns unit-specific roster merged with global roster.
+// Unit-specific entries take precedence (de-dup by studentId then by name).
+function getMergedRoster(unitId) {
+  const unit = appState.units.find(u=>u.id===unitId);
+  const unitRoster = unit?.roster || [];
+  const seen = new Set();
+  const merged = [];
+  for (const r of unitRoster) {
+    const key = r.studentId || r.name;
+    seen.add(key);
+    merged.push(r);
+  }
+  for (const r of appState.globalRoster) {
+    const key = r.studentId || r.name;
+    if (!seen.has(key)) { seen.add(key); merged.push(r); }
+  }
+  return merged.sort((a,b) => a.name.localeCompare(b.name));
+}
+
 // ─── PICKER HELPERS ─────────────────────────────────────────────────────────
 function renderGroupPicker(query) {
   const list = document.getElementById('groupPickerList');
-  const q = (query||'').toLowerCase();
-  const items = appState.roster.filter(r =>
+  const q    = (query||'').toLowerCase();
+  const unit = getCurrentUnit();
+  const roster = unit ? getMergedRoster(unit.id) : appState.globalRoster;
+  const items  = roster.filter(r =>
     r.name.toLowerCase().includes(q) || (r.studentId||'').toLowerCase().includes(q)
   );
   if (!items.length) {
-    list.innerHTML = `<div class="picker-empty">${appState.roster.length ? 'No students match.' : 'Upload a student roster in Settings first.'}</div>`;
+    list.innerHTML = `<div class="picker-empty">${roster.length ? 'No students match.' : 'Upload a student roster in Settings first.'}</div>`;
     return;
   }
   list.innerHTML = items.map(r => {
@@ -1614,12 +1683,13 @@ function updateGroupPickerCount() {
 }
 
 function renderAddStudentPicker(query) {
-  const list = document.getElementById('addStudentPickerList');
-  const q = (query||'').toLowerCase();
+  const list   = document.getElementById('addStudentPickerList');
+  const q      = (query||'').toLowerCase();
   const target = appState.addStudentTarget||{};
-  const unit = appState.units.find(u=>u.id===target.unitId);
+  const unit   = appState.units.find(u=>u.id===target.unitId);
   const existing = new Set(unit?.groups[target.groupIdx]?.students.map(s=>s.id)||[]);
-  const items = appState.roster.filter(r =>
+  const roster   = unit ? getMergedRoster(unit.id) : appState.globalRoster;
+  const items    = roster.filter(r =>
     !existing.has(r.id) &&
     (r.name.toLowerCase().includes(q) || (r.studentId||'').toLowerCase().includes(q))
   );
@@ -1639,7 +1709,9 @@ function renderAddStudentPicker(query) {
 function filterAddStudentPicker(q) { renderAddStudentPicker(q); }
 
 function toggleAddStudentItem(id) {
-  appState.addStudentSelected.has(id) ? appState.addStudentSelected.delete(id) : appState.addStudentSelected.add(id);
+  appState.addStudentSelected.has(id)
+    ? appState.addStudentSelected.delete(id)
+    : appState.addStudentSelected.add(id);
   renderAddStudentPicker(document.getElementById('addStudentSearch').value);
   updateAddStudentCount();
 }
@@ -1650,9 +1722,9 @@ function updateAddStudentCount() {
 
 // ─── ASSESSMENT ────────────────────────────────────────────────────────────
 function startAssessment(unitId, groupIdx, studentIdx) {
-  const unit = appState.units.find(u=>u.id===unitId);
+  const unit    = appState.units.find(u=>u.id===unitId);
   if (!unit) return;
-  const group = unit.groups[groupIdx];
+  const group   = unit.groups[groupIdx];
   if (!group) return;
   const student = group.students[studentIdx];
   if (!student) return;
@@ -1665,16 +1737,19 @@ function startAssessment(unitId, groupIdx, studentIdx) {
   document.getElementById('bc_student').textContent = student.name;
   document.getElementById('assess_studentName').textContent = `Assessing: ${student.name}`;
   document.getElementById('assess_groupName').textContent   = group.name + (student.studentId ? ` · ID: ${student.studentId}` : '');
-  document.getElementById('maxMarksLbl').textContent = appState.totalMarks;
-  document.getElementById('commentsTextarea').value = student.comments || '';
+  document.getElementById('maxMarksLbl').textContent = unit.totalMarks ?? 10;
+  document.getElementById('commentsTextarea').value  = student.comments || '';
 
-  // Reset auto-preview state
+  // Reset auto-preview
   _autoPreviewVisible = false;
   document.getElementById('autoPreviewBox').classList.add('hidden');
   document.getElementById('previewAutoBtn').textContent = '👁 Preview Auto Comments';
 
+  // Clear autosave indicator
+  setAutosaveStatus('idle');
+
   renderCriteria(student.assessments || {});
-  updateTotalScore(student.assessments || {});
+  updateTotalScore(student.assessments || {}, unitId);
   showView('assessment');
 }
 
@@ -1708,7 +1783,7 @@ function renderCriteria(assessments) {
 function onCriteriaChange(criteriaId, val) {
   const numVal = parseFloat(val);
   document.getElementById(`score_${criteriaId}`).textContent = `${numVal}/10`;
-  // Update the live auto-comment hint
+
   const hintEl = document.getElementById(`hint_${criteriaId}`);
   if (hintEl) {
     const { cls, label } = getScoreBand(numVal);
@@ -1716,18 +1791,25 @@ function onCriteriaChange(criteriaId, val) {
     hintEl.className = `auto-hint ${cls}`;
     hintEl.innerHTML = `<span class="hint-badge">${label}</span><span class="hint-text">${esc(comment)}</span>`;
   }
+
   const student = getCurrentStudentObj();
   if (!student) return;
   student.assessments = student.assessments || {};
   student.assessments[criteriaId] = numVal;
-  updateTotalScore(student.assessments);
-  // Refresh preview if it's open
+
+  const { unitId } = appState.selectedGroup;
+  updateTotalScore(student.assessments, unitId);
+
   if (_autoPreviewVisible) refreshAutoPreview();
+
+  // ── NEW: trigger debounced auto-save ──
+  scheduleAutoSave();
 }
 
 function onCommentsChange(val) {
   const student = getCurrentStudentObj();
   if (student) student.comments = val;
+  scheduleAutoSave();
 }
 
 function getCurrentStudentObj() {
@@ -1737,112 +1819,213 @@ function getCurrentStudentObj() {
   return appState.units.find(u=>u.id===unitId)?.groups[groupIdx]?.students[studentIdx];
 }
 
-function updateTotalScore(assessments) {
-  const vals = Object.values(assessments||{});
-  const avg  = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
-  const total = Math.round((avg * appState.totalMarks / 10) * 100) / 100;
-  document.getElementById('totalScoreDisplay').textContent = `${total}/${appState.totalMarks}`;
+function updateTotalScore(assessments, unitId) {
+  const marks = unitId ? getUnitMarks(unitId) : (getCurrentUnit()?.totalMarks ?? 10);
+  const vals  = Object.values(assessments||{});
+  const avg   = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  const total = Math.round((avg * marks / 10) * 100) / 100;
+  document.getElementById('totalScoreDisplay').textContent = `${total}/${marks}`;
   document.getElementById('criteriaProgress').textContent  = `${vals.length}/${CRITERIA.length} criteria rated`;
 }
 
-async function saveAssessment() {
-  const student = getCurrentStudentObj();
-  if (!student) { toast('No student selected','error'); return; }
-  const assessed = Object.keys(student.assessments||{}).length;
-  if (!assessed) { toast('Move at least one slider first','error'); return; }
+// ─── AUTO-SAVE ──────────────────────────────────────────────────────────────
+let _autoSaveTimer   = null;
+let _autoSavePending = false;
 
+function scheduleAutoSave() {
+  setAutosaveStatus('pending');
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(performAutoSave, 1400);
+}
+
+async function performAutoSave() {
+  if (!appState.selectedGroup) return;
   const { unitId } = appState.selectedGroup;
   const unit = appState.units.find(u=>u.id===unitId);
   if (!unit) return;
 
-  const btn = document.getElementById('saveAssessmentBtn');
-  btn.disabled = true;
+  setAutosaveStatus('saving');
   try {
     await unitsRef().doc(unitId).update({ groups: unit.groups });
-    toast('Assessment saved ✓','success');
-    renderGroups();
+    setAutosaveStatus('saved');
+    renderGroups(); // keep score pills fresh in background
   } catch(e) {
-    console.error('saveAssessment failed:', e);
-    toast('Save failed: ' + e.message, 'error');
-  } finally {
-    btn.disabled = false;
+    console.error('autoSave failed:', e);
+    setAutosaveStatus('error');
   }
 }
 
-// ─── ROSTER / CSV ──────────────────────────────────────────────────────────
-function csvDragOver(e) { e.preventDefault(); document.getElementById('csvDropZone').classList.add('drag-over'); }
-function csvDragLeave()  { document.getElementById('csvDropZone').classList.remove('drag-over'); }
-function csvDrop(e)      { e.preventDefault(); csvDragLeave(); handleCsvFile({ files: e.dataTransfer.files }); }
+function setAutosaveStatus(status) {
+  const el   = document.getElementById('autosaveIndicator');
+  const text = document.getElementById('autosaveText');
+  el.className = 'visible';
+  switch(status) {
+    case 'idle':
+      el.className = ''; // hide
+      break;
+    case 'pending':
+      el.classList.add('saving');
+      text.textContent = 'Unsaved…';
+      break;
+    case 'saving':
+      el.classList.add('saving');
+      text.textContent = 'Saving…';
+      break;
+    case 'saved':
+      el.classList.remove('saving');
+      el.classList.add('saved');
+      text.textContent = 'Saved ✓';
+      setTimeout(() => { el.className = ''; }, 2500);
+      break;
+    case 'error':
+      el.classList.remove('saving');
+      el.classList.add('error');
+      text.textContent = 'Save failed';
+      break;
+  }
+  // Also update inline criteria header
+  const inlineEl = document.getElementById('assessAutoSaveStatus');
+  if (inlineEl) {
+    inlineEl.textContent = status === 'saving' ? '⏳ Saving…' : status === 'saved' ? '✓ Saved' : status === 'error' ? '⚠ Save failed' : '';
+  }
+}
 
-function handleCsvFile(input) {
+// ─── PER-UNIT ROSTER (CSV) ─────────────────────────────────────────────────
+function handleUnitCsvFile(input, unitId) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => parseAndSaveRoster(e.target.result);
-  reader.onerror = () => toast('Could not read file','error');
+  reader.onload  = e => parseAndSaveUnitRoster(e.target.result, unitId);
+  reader.onerror = () => toast('Could not read file', 'error');
   reader.readAsText(file);
-  // FIX #4: reset the input so the same file can be re-uploaded
   if (input instanceof HTMLInputElement) input.value = '';
-  else { try { document.getElementById('csvFileInput').value = ''; } catch(_){} }
 }
 
-async function parseAndSaveRoster(raw) {
+async function parseAndSaveUnitRoster(raw, unitId) {
+  const students = parseCsvRoster(raw);
+  if (!students) return;
+
+  const unit = appState.units.find(u=>u.id===unitId);
+  if (!unit) return;
+
+  // Assign stable IDs for the roster entries (based on studentId/name)
+  const rosterEntries = students.map(s => ({
+    id: `r_${(s.studentId||s.name).replace(/\s+/g,'_').toLowerCase()}_${unitId}`,
+    ...s
+  }));
+
+  try {
+    await unitsRef().doc(unitId).update({ roster: rosterEntries });
+    unit.roster = rosterEntries;
+    renderUnitSettings();
+    toast(`${rosterEntries.length} students imported for "${unit.name}"`, 'success');
+  } catch(e) {
+    console.error('Unit roster save failed:', e);
+    toast('Import failed: ' + e.message, 'error');
+  }
+}
+
+async function clearUnitRoster(unitId) {
+  const unit = appState.units.find(u=>u.id===unitId);
+  if (!unit || !unit.roster?.length) return;
+  if (!confirm(`Clear the roster for "${unit.name}"?`)) return;
+  try {
+    await unitsRef().doc(unitId).update({ roster: [] });
+    unit.roster = [];
+    renderUnitSettings();
+    toast('Unit roster cleared');
+  } catch(e) {
+    toast('Could not clear: ' + e.message, 'error');
+  }
+}
+
+// ─── GLOBAL ROSTER (CSV) ───────────────────────────────────────────────────
+function globalCsvDragOver(e)  { e.preventDefault(); document.getElementById('globalCsvDropZone').classList.add('drag-over'); }
+function globalCsvDragLeave()  { document.getElementById('globalCsvDropZone').classList.remove('drag-over'); }
+function globalCsvDrop(e)      { e.preventDefault(); globalCsvDragLeave(); handleGlobalCsvFile({ files: e.dataTransfer.files }); }
+
+function handleGlobalCsvFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload  = e => parseAndSaveGlobalRoster(e.target.result);
+  reader.onerror = () => toast('Could not read file', 'error');
+  reader.readAsText(file);
+  if (input instanceof HTMLInputElement) input.value = '';
+}
+
+async function parseAndSaveGlobalRoster(raw) {
+  const students = parseCsvRoster(raw);
+  if (!students) return;
+
+  try {
+    const batch = db.batch();
+    const existing = await globalRosterRef().get();
+    existing.docs.forEach(d => batch.delete(d.ref));
+    students.forEach(s => {
+      const ref = globalRosterRef().doc();
+      batch.set(ref, { ...s, addedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    });
+    await batch.commit();
+    await loadGlobalRoster();
+    toast(`${students.length} students imported to global roster`, 'success');
+  } catch(e) {
+    console.error('Global roster import failed:', e);
+    toast('Import failed: ' + e.message, 'error');
+  }
+}
+
+async function clearGlobalRoster() {
+  if (!appState.globalRoster.length) return;
+  if (!confirm(`Clear all ${appState.globalRoster.length} students from the global roster?`)) return;
+  try {
+    const batch = db.batch();
+    const snap = await globalRosterRef().get();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    appState.globalRoster = [];
+    renderGlobalRosterTable();
+    toast('Global roster cleared');
+  } catch(e) {
+    console.error('clearGlobalRoster failed:', e);
+    toast('Could not clear: ' + e.message, 'error');
+  }
+}
+
+// ─── CSV PARSING SHARED ────────────────────────────────────────────────────
+function parseCsvRoster(raw) {
   const lines = raw.split(/\r?\n/).filter(l=>l.trim());
-  if (lines.length < 2) { toast('CSV must have a header row + data rows','error'); return; }
+  if (lines.length < 2) { toast('CSV must have a header row + data rows','error'); return null; }
 
   const headers = splitCSVLine(lines[0]).map(h=>h.trim().toLowerCase().replace(/\s+/g,''));
-
-  // FIX #3: name first, then ID — and the ID column must NOT be the same
-  // column we already chose for the name.
   const nameIdx = headers.findIndex(h => h.includes('name'));
-  let idIdx = headers.findIndex((h, i) =>
-    i !== nameIdx && (h === 'id' || h.endsWith('id') || h.startsWith('id') ||
-                      h.includes('studentid') || h.includes('studentnumber') ||
-                      h.includes('number') || h.includes('sid'))
+  let idIdx = headers.findIndex((h,i) =>
+    i !== nameIdx && (h==='id'||h.endsWith('id')||h.startsWith('id')||
+                      h.includes('studentid')||h.includes('studentnumber')||
+                      h.includes('number')||h.includes('sid'))
   );
-  // Last-resort: any column other than the name column whose header contains "student"
-  if (idIdx < 0) idIdx = headers.findIndex((h, i) => i !== nameIdx && h.includes('student'));
+  if (idIdx < 0) idIdx = headers.findIndex((h,i) => i!==nameIdx && h.includes('student'));
 
-  if (nameIdx < 0) { toast('CSV must have a "Name" column','error'); return; }
+  if (nameIdx < 0) { toast('CSV must have a "Name" column','error'); return null; }
 
   const students = [];
   for (let i=1;i<lines.length;i++) {
     const cols = splitCSVLine(lines[i]);
     const name = cols[nameIdx]?.trim();
     if (!name) continue;
-    students.push({
-      name,
-      studentId: idIdx>=0 ? (cols[idIdx]?.trim()||'') : '',
-    });
+    students.push({ name, studentId: idIdx>=0 ? (cols[idIdx]?.trim()||'') : '' });
   }
-
-  if (!students.length) { toast('No valid students found in CSV','error'); return; }
-
-  try {
-    const batch = db.batch();
-    const existing = await rosterRef().get();
-    existing.docs.forEach(d => batch.delete(d.ref));
-    students.forEach(s => {
-      const ref = rosterRef().doc();
-      batch.set(ref, { ...s, addedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    });
-    await batch.commit();
-    await loadRoster();
-    toast(`${students.length} students imported`,'success');
-  } catch(e) {
-    console.error('roster import failed:', e);
-    toast('Import failed: ' + e.message, 'error');
-  }
+  if (!students.length) { toast('No valid students found in CSV','error'); return null; }
+  return students;
 }
 
-// FIX #5: handle escaped double-quotes ("") inside quoted fields per RFC 4180
 function splitCSVLine(line) {
   const result = [];
   let cur = '', inQ = false;
   for (let i=0;i<line.length;i++) {
     const ch = line[i];
     if (ch === '"') {
-      if (inQ && line[i+1] === '"') { cur += '"'; i++; continue; }   // escaped quote
+      if (inQ && line[i+1]==='"') { cur+='"'; i++; continue; }
       inQ = !inQ; continue;
     }
     if (ch === ',' && !inQ) { result.push(cur); cur=''; continue; }
@@ -1850,34 +2033,6 @@ function splitCSVLine(line) {
   }
   result.push(cur);
   return result;
-}
-
-function renderRosterTable() {
-  const body    = document.getElementById('rosterBody');
-  const lbl     = document.getElementById('rosterCountLbl');
-  if (!appState.roster.length) { hide('rosterSection'); return; }
-  show('rosterSection');
-  lbl.textContent = `${appState.roster.length} students in roster`;
-  body.innerHTML = appState.roster.map((s,i)=>`
-    <tr><td>${i+1}</td><td>${esc(s.name)}</td><td style="font-family:'DM Mono',monospace">${esc(s.studentId||'')}</td></tr>
-  `).join('');
-}
-
-async function clearRoster() {
-  if (!appState.roster.length) return;
-  if (!confirm(`Clear all ${appState.roster.length} students from the roster?`)) return;
-  try {
-    const batch = db.batch();
-    const snap = await rosterRef().get();
-    snap.docs.forEach(d => batch.delete(d.ref));
-    await batch.commit();
-    appState.roster = [];
-    renderRosterTable();
-    toast('Roster cleared');
-  } catch(e) {
-    console.error('clearRoster failed:', e);
-    toast('Could not clear: ' + e.message, 'error');
-  }
 }
 
 // ─── RENDER ────────────────────────────────────────────────────────────────
@@ -1894,10 +2049,9 @@ function renderUnitsNav() {
   `).join('');
 }
 
-// FIX #7: empty-state messaging now adapts to "no units" vs "no groups"
 function renderGroups() {
-  const grid  = document.getElementById('groupsGrid');
-  const unit  = getCurrentUnit();
+  const grid    = document.getElementById('groupsGrid');
+  const unit    = getCurrentUnit();
   const titleEl = document.getElementById('emptyGroupsTitle');
   const hintEl  = document.getElementById('emptyGroupsHint');
   const btnEl   = document.getElementById('emptyGroupsBtn');
@@ -1919,9 +2073,10 @@ function renderGroups() {
     return;
   }
   hide('emptyGroups');
-  grid.innerHTML = unit.groups.map((g, gi) => {
+  const marks = unit.totalMarks ?? 10;
+  grid.innerHTML = unit.groups.map((g,gi) => {
     const studentsHTML = g.students?.length ? g.students.map((s,si)=>{
-      const total    = calcScore(s.assessments);
+      const total    = calcScore(s.assessments, marks);
       const assessed = Object.keys(s.assessments||{}).length;
       const pillCls  = assessed===CRITERIA.length?'score-pill assessed':assessed>0?'score-pill partial':'score-pill';
       return `
@@ -1931,7 +2086,7 @@ function renderGroups() {
             ${s.studentId?`<div class="student-id">${esc(s.studentId)}</div>`:''}
           </div>
           <div class="student-score-wrap">
-            <span class="${pillCls}">${total}/${appState.totalMarks}</span>
+            <span class="${pillCls}">${total}/${marks}</span>
             <button class="btn btn-teal btn-sm" onclick="startAssessment('${esc(unit.id)}',${gi},${si})">Assess</button>
             <button class="btn btn-ghost btn-sm" onclick="removeStudentFromGroup('${esc(unit.id)}',${gi},${si})" title="Remove">✕</button>
           </div>
@@ -1945,7 +2100,7 @@ function renderGroups() {
           <span class="group-card-title">${esc(g.name)}</span>
           <div style="display:flex;gap:6px">
             <button class="btn btn-sm" onclick="openAddStudentModal('${esc(unit.id)}',${gi})" style="background:rgba(255,255,255,.15);color:#fff;font-size:12px">+ Student</button>
-            <button class="btn btn-sm" onclick="openTurnitinModal('${esc(unit.id)}',${gi})" style="background:rgba(255,255,255,.15);color:#fff;font-size:12px">↗ Turnitin</button>
+            <button class="btn btn-sm" onclick="openTurnitinModal('${esc(unit.id)}',${gi})" style="background:rgba(255,255,255,.15);color:#fff;font-size:12px">↗ Export</button>
             <button class="btn btn-sm btn-red" onclick="deleteGroup('${esc(unit.id)}',${gi})" title="Delete group" style="padding:5px 8px">🗑</button>
           </div>
         </div>
@@ -1954,26 +2109,92 @@ function renderGroups() {
   }).join('');
 }
 
-// Empty-state button — context-aware
 function emptyStateAction() {
   if (!appState.units.length) openCreateUnitModal();
   else openCreateGroupModal();
 }
 
-function renderUnitsManagement() {
-  const el = document.getElementById('unitsManagementList');
+// ─── SETTINGS: PER-UNIT ACCORDION ──────────────────────────────────────────
+function renderUnitSettings() {
+  const el = document.getElementById('unitSettingsList');
   if (!appState.units.length) {
-    el.innerHTML = '<p style="font-size:13px;color:var(--text-lt)">No units yet.</p>';
+    el.innerHTML = '<p style="font-size:13px;color:var(--text-lt)">No units yet. Create a unit to configure it here.</p>';
     return;
   }
-  el.innerHTML = appState.units.map(u=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--cream-dk)">
-      <div>
-        <strong style="font-size:14px">${esc(u.code?u.code+' – ':'')}${esc(u.name)}</strong>
-        <div style="font-size:12px;color:var(--text-lt)">${(u.groups||[]).length} group(s)</div>
-      </div>
-      <button class="btn btn-red btn-sm" onclick="deleteUnit('${esc(u.id)}')">Delete</button>
-    </div>
+  el.innerHTML = appState.units.map((u,idx) => {
+    const rosterCount = u.roster?.length || 0;
+    const groupCount  = u.groups?.length  || 0;
+    return `
+      <div class="unit-settings-item" id="unitSettingsItem_${esc(u.id)}">
+        <div class="unit-settings-header" onclick="toggleUnitSettingsItem('${esc(u.id)}')">
+          <div class="unit-settings-header-left">
+            ${u.code?`<span class="unit-settings-badge">${esc(u.code)}</span>`:''}
+            <div>
+              <div class="unit-settings-header-name">${esc(u.name)}</div>
+              <div class="unit-settings-header-meta">${groupCount} group(s) · ${rosterCount} students in unit roster · Max: ${u.totalMarks??10} marks</div>
+            </div>
+          </div>
+          <span class="unit-settings-toggle">›</span>
+        </div>
+        <div class="unit-settings-body">
+          <!-- Marks -->
+          <div class="marks-row">
+            <label>Maximum Mark for this unit</label>
+            <input class="marks-input-sm" type="number" min="1" max="100"
+              value="${u.totalMarks??10}"
+              onchange="saveUnitMarks('${esc(u.id)}',this.value)"
+              title="Max mark for ${esc(u.name)}">
+          </div>
+
+          <!-- Unit-specific roster -->
+          <div style="margin-bottom:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <p style="font-size:13px;font-weight:600;color:var(--text-mid)">Unit Roster (${rosterCount} students)</p>
+              ${rosterCount ? `<button class="btn btn-red btn-sm" onclick="clearUnitRoster('${esc(u.id)}')">Clear</button>` : ''}
+            </div>
+            <div class="csv-drop-zone" style="padding:16px"
+              onclick="document.getElementById('unitCsvInput_${esc(u.id)}').click()"
+              ondragover="event.preventDefault();this.classList.add('drag-over')"
+              ondragleave="this.classList.remove('drag-over')"
+              ondrop="event.preventDefault();this.classList.remove('drag-over');handleUnitCsvFile({files:event.dataTransfer.files},'${esc(u.id)}')">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload CSV for <strong>${esc(u.name)}</strong>
+            </div>
+            <input type="file" id="unitCsvInput_${esc(u.id)}" accept=".csv" style="display:none"
+              onchange="handleUnitCsvFile(this,'${esc(u.id)}')">
+            ${rosterCount ? `
+              <div class="roster-wrap" style="margin-top:10px">
+                <table class="roster-table">
+                  <thead><tr><th>#</th><th>Name</th><th>Student ID</th></tr></thead>
+                  <tbody>${(u.roster||[]).map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.name)}</td><td style="font-family:'DM Mono',monospace">${esc(s.studentId||'')}</td></tr>`).join('')}</tbody>
+                </table>
+              </div>` : ''}
+          </div>
+
+          <!-- Delete unit -->
+          <div style="border-top:1px solid var(--cream-dk);padding-top:12px;margin-top:4px;display:flex;justify-content:flex-end">
+            <button class="btn btn-red btn-sm" onclick="deleteUnit('${esc(u.id)}')">🗑 Delete Unit</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleUnitSettingsItem(unitId) {
+  const item = document.getElementById(`unitSettingsItem_${unitId}`);
+  if (!item) return;
+  item.classList.toggle('open');
+}
+
+function renderGlobalRosterTable() {
+  const body   = document.getElementById('globalRosterBody');
+  const lbl    = document.getElementById('globalRosterCountLbl');
+  if (!body) return;
+  if (!appState.globalRoster.length) { hide('globalRosterSection'); return; }
+  show('globalRosterSection');
+  lbl.textContent = `${appState.globalRoster.length} students in global roster`;
+  body.innerHTML = appState.globalRoster.map((s,i)=>`
+    <tr><td>${i+1}</td><td>${esc(s.name)}</td><td style="font-family:'DM Mono',monospace">${esc(s.studentId||'')}</td></tr>
   `).join('');
 }
 
@@ -1986,7 +2207,7 @@ function showView_reports() {
 }
 
 function repFilterChanged() {
-  const uid2 = document.getElementById('rep_unit').value;
+  const uid2   = document.getElementById('rep_unit').value;
   const grpSel = document.getElementById('rep_group');
   grpSel.innerHTML = '<option value="">All Groups</option>';
   if (uid2) {
@@ -2006,8 +2227,6 @@ function repFilterChanged() {
   generateReport();
 }
 
-// FIX #14: defensive — also note we use "|" separator now to support unit
-// IDs that contain underscores.
 function getReportData() {
   const unitId = document.getElementById('rep_unit').value;
   const grpVal = document.getElementById('rep_group').value;
@@ -2017,14 +2236,14 @@ function getReportData() {
     if (!u) return data;
     if (grpVal) {
       const gIdx = parseInt(grpVal.split('|')[1]);
-      const g = u.groups?.[gIdx];
+      const g    = u.groups?.[gIdx];
       data = g ? [{ unit:u, groups:[g] }] : [];
     } else {
       data = [{ unit:u, groups:u.groups||[] }];
     }
   } else {
     if (grpVal) {
-      const [uid3, gi] = grpVal.split('|');
+      const [uid3,gi] = grpVal.split('|');
       const u = appState.units.find(x=>x.id===uid3);
       const g = u?.groups?.[parseInt(gi)];
       data = g ? [{ unit:u, groups:[g] }] : [];
@@ -2037,8 +2256,8 @@ function getReportData() {
 
 function generateReport() {
   const type = document.getElementById('rep_type').value;
-  const data = getReportData();
-  const out  = document.getElementById('reportOutput');
+  const data  = getReportData();
+  const out   = document.getElementById('reportOutput');
   if (!data.length) { out.innerHTML='<p style="text-align:center;color:var(--text-lt);padding:40px">No data.</p>'; return; }
   switch(type) {
     case 'detailed': out.innerHTML = renderDetailedReport(data); break;
@@ -2049,34 +2268,35 @@ function generateReport() {
 
 function renderDetailedReport(data) {
   let html = `<div class="report-hdr"><h2>Detailed Assessment Report</h2><p>Generated ${new Date().toLocaleString()}</p></div>`;
-  let any = false;
+  let any  = false;
   data.forEach(({unit,groups}) => groups.forEach(g => {
     if (!g?.students?.length) return;
     any = true;
+    const marks = unit.totalMarks ?? 10;
     html += `<h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin:24px 0 12px;color:var(--navy)">${esc(unit.name)} · ${esc(g.name)}</h3>`;
-    g.students.forEach(s => { html += studentReportBlock(s); });
+    g.students.forEach(s => { html += studentReportBlock(s, marks); });
   }));
   if (!any) html += '<p style="text-align:center;color:var(--text-lt);padding:40px">No students to display.</p>';
   return html;
 }
 
-function studentReportBlock(s) {
-  const total = calcScore(s.assessments);
+function studentReportBlock(s, marks) {
+  marks = marks ?? 10;
+  const total = calcScore(s.assessments, marks);
   const criteriaHTML = CRITERIA.map(c => {
     const sc = s.assessments?.[c.id];
     return `<div class="srb-criterion"><span>${esc(c.name)}</span><span>${sc!==undefined?sc+'/10':'—'}</span></div>`;
   }).join('');
 
-  // Build per-criterion auto-comments
   const hasAnyAssessed = CRITERIA.some(c => s.assessments?.[c.id] !== undefined);
   let autoCommentsHTML = '';
   if (hasAnyAssessed) {
     const rows = CRITERIA.map(c => {
       const sc = s.assessments?.[c.id];
-      if (sc === undefined) return '';
+      if (sc===undefined) return '';
       const comment = getAutoComment(c.id, sc);
       const { label } = getScoreBand(sc);
-      const badgeColor = sc === 0 ? '#8896a8' : sc <= 4 ? '#b91c1c' : sc <= 6 ? '#92400e' : sc <= 8 ? '#1e40af' : '#14532d';
+      const badgeColor = sc===0?'#8896a8':sc<=4?'#b91c1c':sc<=6?'#92400e':sc<=8?'#1e40af':'#14532d';
       return `<div class="srb-auto-criterion-comment">
         <span class="acrit-name">${esc(c.name)} <span style="font-weight:400;font-size:11px;color:${badgeColor}">(${label})</span></span>
         <span class="acrit-text">${esc(comment)}</span>
@@ -2085,7 +2305,6 @@ function studentReportBlock(s) {
     autoCommentsHTML = `<div class="srb-auto-comments"><strong>✨ Auto-Generated Feedback (by Criterion)</strong>${rows}</div>`;
   }
 
-  // Teacher's comments
   const teacherHTML = s.comments?.trim()
     ? `<div class="srb-teacher-comments"><strong>💬 Teacher's Feedback</strong>${esc(s.comments)}</div>`
     : '';
@@ -2094,7 +2313,7 @@ function studentReportBlock(s) {
     <div class="student-report-block">
       <div class="srb-header">
         <div><div class="srb-name">${esc(s.name)}</div>${s.studentId?`<div class="srb-id">ID: ${esc(s.studentId)}</div>`:''}</div>
-        <div class="srb-score">${total}/${appState.totalMarks}</div>
+        <div class="srb-score">${total}/${marks}</div>
       </div>
       <div class="srb-body">
         <div class="srb-criteria">${criteriaHTML}</div>
@@ -2107,10 +2326,11 @@ function studentReportBlock(s) {
 function renderSummaryReport(data) {
   let total=0,assessed=0,scores=[],cStats={};
   CRITERIA.forEach(c=>{cStats[c.id]={name:c.name,vals:[]};});
-  data.forEach(({groups})=>groups.forEach(g=>g?.students?.forEach(s=>{
+  data.forEach(({unit,groups})=>groups.forEach(g=>g?.students?.forEach(s=>{
     total++;
     const sc = Object.keys(s.assessments||{}).length;
-    if(sc){assessed++;scores.push(parseFloat(calcScore(s.assessments)));}
+    const marks = unit.totalMarks??10;
+    if(sc){assessed++;scores.push(parseFloat(calcScore(s.assessments,marks)));}
     CRITERIA.forEach(c=>{ if(s.assessments?.[c.id]!==undefined) cStats[c.id].vals.push(s.assessments[c.id]); });
   })));
   const avg=(v=>v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(2):'0.00')(scores);
@@ -2124,86 +2344,67 @@ function renderSummaryReport(data) {
   </div>
   <h3 style="font-family:'Playfair Display',serif;font-size:1.05rem;margin:20px 0 12px">Criteria Averages</h3>`;
   CRITERIA.forEach(c=>{
-    const v=cStats[c.id].vals;
-    const a=v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(2):'—';
-    html+=`<div class="srb-criterion" style="margin-bottom:8px"><span>${esc(c.name)}</span><span>${a}/10 <span style="font-size:11px;color:var(--text-lt)">(${v.length} students)</span></span></div>`;
+    const vv=cStats[c.id].vals;
+    const a=vv.length?(vv.reduce((a,b)=>a+b,0)/vv.length).toFixed(2):'—';
+    html+=`<div class="srb-criterion" style="margin-bottom:8px"><span>${esc(c.name)}</span><span>${a}/10 <span style="font-size:11px;color:var(--text-lt)">(${vv.length} students)</span></span></div>`;
   });
   return html;
 }
 
-// FIX #13: only count assessed students in the per-group average
 function renderOverviewReport(data) {
   let html=`<div class="report-hdr"><h2>Unit Overview</h2><p>Generated ${new Date().toLocaleString()}</p></div>`;
   data.forEach(({unit,groups})=>{
-    const total=groups.reduce((a,g)=>a+(g?.students?.length||0),0);
-    const assessed=groups.reduce((a,g)=>a+(g?.students?.filter(s=>Object.keys(s.assessments||{}).length).length||0),0);
-    html+=`<h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin:20px 0 10px">${esc(unit.code?unit.code+' – ':'')}${esc(unit.name)}</h3>
+    const marks    = unit.totalMarks??10;
+    const total    = groups.reduce((a,g)=>a+(g?.students?.length||0),0);
+    const assessed = groups.reduce((a,g)=>a+(g?.students?.filter(s=>Object.keys(s.assessments||{}).length).length||0),0);
+    html+=`<h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin:20px 0 10px">${esc(unit.code?unit.code+' – ':'')}${esc(unit.name)} <span style="font-size:13px;color:var(--text-lt);font-family:'DM Sans',sans-serif">(max ${marks})</span></h3>
     <p style="font-size:13px;color:var(--text-mid);margin-bottom:12px">${groups.length} groups · ${total} students · ${assessed} assessed</p>`;
     groups.forEach(g=>{
       if(!g) return;
-      const assessedStudents = g.students?.filter(s=>Object.keys(s.assessments||{}).length) || [];
-      const gA = assessedStudents.length;
-      const avgS = gA
-        ? (assessedStudents.reduce((a,s)=>a+parseFloat(calcScore(s.assessments)),0)/gA).toFixed(2)
-        : '—';
-      html+=`<div class="srb-criterion" style="margin-bottom:8px"><span>${esc(g.name)}</span><span>${g.students?.length||0} students · ${gA} assessed · Avg ${avgS}/${appState.totalMarks}</span></div>`;
+      const aS = g.students?.filter(s=>Object.keys(s.assessments||{}).length)||[];
+      const gA = aS.length;
+      const avgS = gA ? (aS.reduce((a,s)=>a+parseFloat(calcScore(s.assessments,marks)),0)/gA).toFixed(2) : '—';
+      html+=`<div class="srb-criterion" style="margin-bottom:8px"><span>${esc(g.name)}</span><span>${g.students?.length||0} students · ${gA} assessed · Avg ${avgS}/${marks}</span></div>`;
     });
   });
   return html;
 }
 
 // ─── TURNITIN EXPORT ───────────────────────────────────────────────────────
-let _turnitinData = [];
-let _turnitinUnitName = '';
-let _turnitinGroupName = '';
+let _turnitinData=[], _turnitinUnitName='', _turnitinGroupName='', _turnitinMarks=10;
 
 function openTurnitinModal(unitId, groupIdx) {
   const unit  = appState.units.find(u=>u.id===unitId);
   const group = unit?.groups[groupIdx];
   if (!group) return;
-  _turnitinData = group.students || [];
-  _turnitinUnitName = unit.name;
+  const marks = unit.totalMarks??10;
+  _turnitinData      = group.students||[];
+  _turnitinUnitName  = unit.name;
   _turnitinGroupName = group.name;
+  _turnitinMarks     = marks;
 
-  let preview = `UNIT: ${unit.name}${unit.code?' ('+unit.code+')':''}\n`;
-  preview += `GROUP: ${group.name}\n`;
-  preview += `DATE: ${new Date().toLocaleString()}\n`;
-  preview += '='.repeat(56)+'\n\n';
-
+  let preview = `UNIT: ${unit.name}${unit.code?' ('+unit.code+')':''}\nGROUP: ${group.name}\nDATE: ${new Date().toLocaleString()}\nMAX MARK: ${marks}\n${'='.repeat(56)}\n\n`;
   if (!group.students.length) {
     preview += '(No students in this group.)';
   } else {
     group.students.forEach(s => {
-      const total = calcScore(s.assessments);
-      preview += `STUDENT: ${s.name}`;
-      if (s.studentId) preview += ` | ID: ${s.studentId}`;
-      preview += `\nSCORE: ${total} / ${appState.totalMarks}\n`;
-      preview += '-'.repeat(40)+'\n';
+      const total = calcScore(s.assessments, marks);
+      preview += `STUDENT: ${s.name}${s.studentId?' | ID: '+s.studentId:''}\nSCORE: ${total} / ${marks}\n${'-'.repeat(40)}\n`;
       CRITERIA.forEach(c => {
         const sc = s.assessments?.[c.id];
         preview += `  ${c.name}: ${sc!==undefined?sc+'/10':'Not assessed'}`;
-        if (sc !== undefined) {
-          const { label } = getScoreBand(sc);
-          preview += ` [${label}]`;
-        }
+        if (sc!==undefined) { const { label }=getScoreBand(sc); preview+=` [${label}]`; }
         preview += '\n';
       });
-      // Auto-generated comments
-      const hasAssessed = CRITERIA.some(c => s.assessments?.[c.id] !== undefined);
+      const hasAssessed = CRITERIA.some(c=>s.assessments?.[c.id]!==undefined);
       if (hasAssessed) {
         preview += '\nAUTO-GENERATED COMMENTS:\n';
-        CRITERIA.forEach(c => {
-          const sc = s.assessments?.[c.id];
-          if (sc !== undefined) {
-            preview += `  ${c.name}: ${getAutoComment(c.id, sc)}\n`;
-          }
-        });
+        CRITERIA.forEach(c=>{ const sc=s.assessments?.[c.id]; if(sc!==undefined) preview+=`  ${c.name}: ${getAutoComment(c.id,sc)}\n`; });
       }
       if (s.comments?.trim()) preview += `\nTEACHER FEEDBACK:\n${s.comments.trim()}\n`;
       preview += '\n';
     });
   }
-
   document.getElementById('turnitinPreview').textContent = preview;
   openModal('turnitinModal');
 }
@@ -2211,19 +2412,14 @@ function openTurnitinModal(unitId, groupIdx) {
 function copyTurnitinText() {
   const text = document.getElementById('turnitinPreview').textContent;
   if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(text)
-      .then(()=>toast('Copied to clipboard ✓','success'))
-      .catch(()=>fallbackCopy(text));
-  } else {
-    fallbackCopy(text);
-  }
+    navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard ✓','success')).catch(()=>fallbackCopy(text));
+  } else { fallbackCopy(text); }
 }
 
 function fallbackCopy(text) {
   const ta = document.createElement('textarea');
-  ta.value = text; ta.style.position='fixed'; ta.style.left='-9999px';
-  document.body.appendChild(ta);
-  ta.select();
+  ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
+  document.body.appendChild(ta); ta.select();
   try { document.execCommand('copy'); toast('Copied to clipboard ✓','success'); }
   catch(_) { toast('Copy failed — please select & copy manually','error'); }
   document.body.removeChild(ta);
@@ -2231,30 +2427,30 @@ function fallbackCopy(text) {
 
 function downloadTurnitinCSV() {
   if (!_turnitinData.length) { toast('No data to export','error'); return; }
-  const headers = ['Student Name','Student ID','Total Score',
+  const headers = ['Student Name','Student ID',`Total Score (/${_turnitinMarks})`,
     ...CRITERIA.map(c=>c.name),'Comments'];
   const rows = _turnitinData.map(s => [
-    s.name, s.studentId||'', calcScore(s.assessments),
+    s.name, s.studentId||'', calcScore(s.assessments, _turnitinMarks),
     ...CRITERIA.map(c=>s.assessments?.[c.id]??''),
     (s.comments||'').replace(/"/g,'""')
   ]);
   const csv = [headers,...rows].map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   const safeName = (_turnitinGroupName||'group').replace(/[^a-z0-9]+/gi,'_').toLowerCase();
-  a.download = `turnitin-grades-${safeName}-${Date.now()}.csv`;
+  a.download = `grades-${safeName}-${Date.now()}.csv`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   toast('CSV downloaded');
 }
 
 // ─── SCORE CALC ────────────────────────────────────────────────────────────
-function calcScore(assessments) {
+function calcScore(assessments, marks) {
+  marks = marks ?? 10;
   const vals = Object.values(assessments||{});
   if (!vals.length) return 0;
   const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
-  return Math.round((avg * appState.totalMarks / 10) * 100) / 100;
+  return Math.round((avg * marks / 10) * 100) / 100;
 }
 
 // ─── VIEW ROUTER ───────────────────────────────────────────────────────────
@@ -2263,38 +2459,34 @@ function showView(name) {
   show(name+'View');
   appState.currentView = name;
   if (name==='reports')  { showView_reports(); generateReport(); }
-  if (name==='settings') { renderUnitsManagement(); document.getElementById('maxMarksInput').value=appState.totalMarks; }
+  if (name==='settings') { renderUnitSettings(); renderGlobalRosterTable(); }
   if (name==='units')    { renderUnitsNav(); renderGroups(); }
+  // Hide autosave indicator when leaving assessment
+  if (name !== 'assessment') setAutosaveStatus('idle');
 }
 
 // ─── MODAL HELPERS ─────────────────────────────────────────────────────────
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-// Close modal on overlay click
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.classList.remove('open'); });
 });
 
-// FIX #11: Escape key closes any open modal
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
-  }
+  if (e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
 });
 
-// FIX #10: Enter key in modal text inputs submits the modal's primary action
 const MODAL_PRIMARY_ACTION = {
-  unitModal:        createUnit,
-  groupModal:       createGroup,
-  addStudentModal:  addStudentsToGroup,
+  unitModal:       createUnit,
+  groupModal:      createGroup,
+  addStudentModal: addStudentsToGroup,
 };
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('keydown', e => {
-    if (e.key !== 'Enter') return;
-    if (e.target.tagName === 'TEXTAREA') return;
-    const id = overlay.id;
-    const fn = MODAL_PRIMARY_ACTION[id];
+    if (e.key!=='Enter') return;
+    if (e.target.tagName==='TEXTAREA') return;
+    const fn = MODAL_PRIMARY_ACTION[overlay.id];
     if (fn && overlay.classList.contains('open')) { e.preventDefault(); fn(); }
   });
 });
@@ -2316,24 +2508,20 @@ function exportReportHTML() {
     .srb-body{padding:14px 16px}
     .srb-criteria{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin-bottom:12px}
     .srb-criterion{display:flex;justify-content:space-between;padding:7px 10px;background:#f8f5ef;border-radius:7px;font-size:13px}
-    .srb-comments{background:#fef3c7;border-left:3px solid #e8a020;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#78350f}
-    .srb-comments strong{display:block;margin-bottom:3px;font-size:12px;text-transform:uppercase}
     .srb-auto-comments{background:#eff6ff;border-left:3px solid #3b82f6;border-radius:0 8px 8px 0;padding:10px 14px;font-size:12.5px;color:#1e3a5f;margin-bottom:8px}
     .srb-auto-comments strong{display:block;margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#1e40af}
     .srb-auto-criterion-comment{display:flex;gap:8px;margin-bottom:5px;padding-bottom:5px;border-bottom:1px solid #bfdbfe;font-size:12.5px}
     .srb-auto-criterion-comment:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-    .acrit-name{font-weight:600;min-width:180px;flex-shrink:0;color:#1e40af}
-    .acrit-text{color:#1e3a5f}
+    .acrit-name{font-weight:600;min-width:180px;flex-shrink:0;color:#1e40af}.acrit-text{color:#1e3a5f}
     .srb-teacher-comments{background:#fef3c7;border-left:3px solid #e8a020;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#78350f}
-    .srb-teacher-comments strong{display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#92400e}
+    .srb-teacher-comments strong{display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase}
     h3{font-size:1.1rem;margin:20px 0 12px}
   </style></head><body>${content}</body></html>`;
   const blob = new Blob([html],{type:'text/html'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download = `assessment-report-${new Date().toISOString().split('T')[0]}.html`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
 // ─── TOAST ─────────────────────────────────────────────────────────────────
@@ -2346,18 +2534,14 @@ function toast(msg, type='') {
 }
 
 // ─── UTILITIES ─────────────────────────────────────────────────────────────
-function v(id) { return document.getElementById(id)?.value || ''; }
+function v(id)  { return document.getElementById(id)?.value||''; }
 function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
-function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
-function hideAll() {
-  ['loadingScreen','loginScreen','appScreen'].forEach(hide);
-}
+function show(id){ document.getElementById(id)?.classList.remove('hidden'); }
+function hide(id){ document.getElementById(id)?.classList.add('hidden'); }
+function hideAll(){ ['loadingScreen','loginScreen','appScreen'].forEach(hide); }
 
-// Enter key on login screen submits sign-in / sign-up
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !document.getElementById('loginScreen').classList.contains('hidden')) {
-    // don't double-fire when modals are open (none should be on login, but defensive)
+  if (e.key==='Enter' && !document.getElementById('loginScreen').classList.contains('hidden')) {
     if (!document.querySelector('.modal-overlay.open')) handleAuth();
   }
 });
