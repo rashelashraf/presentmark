@@ -536,6 +536,19 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
 .srb-name{font-family:'Playfair Display',serif;font-size:1rem;color:#fff}
 .srb-id{font-size:12px;color:rgba(255,255,255,.55);font-family:'DM Mono',monospace}
 .srb-score{font-family:'DM Mono',monospace;font-size:1.2rem;font-weight:500;color:var(--teal-lt)}
+.srb-header-right{display:flex;align-items:center;gap:14px}
+.srb-copy-wrap{display:flex;gap:6px}
+.srb-copy-btn{
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+  padding:5px 10px;border-radius:7px;cursor:pointer;
+  background:rgba(255,255,255,.12);color:#fff;
+  border:1px solid rgba(255,255,255,.22);
+  transition:.15s;white-space:nowrap;
+}
+.srb-copy-btn:hover{background:var(--teal);border-color:var(--teal)}
+.srb-copy-btn.srb-copy-btn-alt{background:rgba(255,255,255,.06)}
+.srb-copy-btn.copied{background:var(--green);border-color:var(--green)}
+@media print{.srb-copy-wrap{display:none!important}}
 .srb-body{padding:14px 16px}
 .srb-criteria{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin-bottom:12px}
 .srb-criterion{
@@ -615,6 +628,23 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
   background:#fff;
 }
 .unit-settings-item.open .unit-settings-body{display:block}
+
+/* Editable unit name/code */
+.unit-detail-edit{
+  display:flex;gap:12px;flex-wrap:wrap;
+  margin-bottom:14px;padding:14px;
+  background:var(--cream);border-radius:var(--radius);
+}
+.ude-row{display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px}
+.ude-row label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-lt)}
+.ude-input{
+  padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:14px;font-weight:500;color:var(--text-dark);background:#fff;
+  font-family:'DM Sans',sans-serif;
+}
+.ude-input-code{font-family:'DM Mono',monospace;font-weight:600;letter-spacing:.02em}
+.ude-input:focus{outline:none;border-color:var(--teal)}
+
 
 /* Marks input inline */
 .marks-row{
@@ -866,6 +896,8 @@ input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px}
           <div class="view-title">Assessment Reports</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn btn-ghost" onclick="showView('units')">← Back</button>
+            <button class="btn btn-teal" onclick="copyEntireReport('plain',this)" title="Copy all student breakdowns & comments as plain text">📋 Copy All</button>
+            <button class="btn btn-ghost btn-sm" onclick="copyEntireReport('markdown',this)" title="Copy all as Markdown">⤓ Copy All (MD)</button>
             <button class="btn btn-navy" onclick="window.print()">🖨 Print</button>
             <button class="btn btn-green" onclick="exportReportHTML()">⬇ Export HTML</button>
           </div>
@@ -1491,6 +1523,30 @@ async function saveUnitMarks(unitId, val) {
     renderGroups(); // refresh score pills
   } catch(e) {
     console.error('saveUnitMarks failed:', e);
+    toast('Could not save: ' + e.message, 'error');
+  }
+}
+
+async function saveUnitDetails(unitId) {
+  const u = appState.units.find(u=>u.id===unitId);
+  if (!u) return;
+  const nameEl = document.getElementById(`unitNameInput_${unitId}`);
+  const codeEl = document.getElementById(`unitCodeInput_${unitId}`);
+  const newName = (nameEl?.value || '').trim();
+  const newCode = (codeEl?.value || '').trim();
+  if (!newName) { toast('Unit name cannot be empty','error'); if(nameEl) nameEl.value = u.name; return; }
+  if (newName === u.name && newCode === (u.code||'')) return; // nothing changed
+  u.name = newName;
+  u.code = newCode;
+  try {
+    await unitsRef().doc(unitId).update({ name: newName, code: newCode });
+    toast('Unit details updated','success');
+    renderUnitsNav();
+    renderUnitSettings();
+    renderGroups();
+    document.getElementById(`unitSettingsItem_${unitId}`)?.classList.add('open');
+  } catch(e) {
+    console.error('saveUnitDetails failed:', e);
     toast('Could not save: ' + e.message, 'error');
   }
 }
@@ -2137,6 +2193,22 @@ function renderUnitSettings() {
           <span class="unit-settings-toggle">›</span>
         </div>
         <div class="unit-settings-body">
+          <!-- Edit unit details -->
+          <div class="unit-detail-edit">
+            <div class="ude-row">
+              <label>Unit Name</label>
+              <input class="ude-input" type="text" id="unitNameInput_${esc(u.id)}"
+                value="${esc(u.name)}" placeholder="e.g. Database Systems"
+                onchange="saveUnitDetails('${esc(u.id)}')">
+            </div>
+            <div class="ude-row">
+              <label>Unit Code</label>
+              <input class="ude-input ude-input-code" type="text" id="unitCodeInput_${esc(u.id)}"
+                value="${esc(u.code||'')}" placeholder="e.g. CS204"
+                onchange="saveUnitDetails('${esc(u.id)}')">
+            </div>
+          </div>
+
           <!-- Marks -->
           <div class="marks-row">
             <label>Maximum Mark for this unit</label>
@@ -2258,6 +2330,9 @@ function generateReport() {
   const type = document.getElementById('rep_type').value;
   const data  = getReportData();
   const out   = document.getElementById('reportOutput');
+  // Reset per-render copyable-text store
+  for (const k in _copyStore) delete _copyStore[k];
+  _copyStoreSeq = 0;
   if (!data.length) { out.innerHTML='<p style="text-align:center;color:var(--text-lt);padding:40px">No data.</p>'; return; }
   switch(type) {
     case 'detailed': out.innerHTML = renderDetailedReport(data); break;
@@ -2274,13 +2349,81 @@ function renderDetailedReport(data) {
     any = true;
     const marks = unit.totalMarks ?? 10;
     html += `<h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;margin:24px 0 12px;color:var(--navy)">${esc(unit.name)} · ${esc(g.name)}</h3>`;
-    g.students.forEach(s => { html += studentReportBlock(s, marks); });
+    g.students.forEach(s => { html += studentReportBlock(s, marks, unit.name, g.name); });
   }));
   if (!any) html += '<p style="text-align:center;color:var(--text-lt);padding:40px">No students to display.</p>';
   return html;
 }
 
-function studentReportBlock(s, marks) {
+// ── Copyable-text store: maps a generated block id → {plain, markdown} text ──
+const _copyStore = {};
+let _copyStoreSeq = 0;
+
+// Build the plain-text / markdown transfer text for a single student.
+function buildStudentTransferText(s, marks, unitName, groupName) {
+  marks = marks ?? 10;
+  const total = calcScore(s.assessments, marks);
+  const assessed = CRITERIA.filter(c => s.assessments?.[c.id] !== undefined);
+
+  // ---------- PLAIN ----------
+  const plain = [];
+  plain.push(`${s.name}${s.studentId ? ` (ID: ${s.studentId})` : ''}`);
+  if (unitName || groupName) plain.push([unitName, groupName].filter(Boolean).join(' · '));
+  plain.push(`Total Score: ${total}/${marks}`);
+  plain.push('');
+  plain.push('Marking Breakdown:');
+  CRITERIA.forEach(c => {
+    const sc = s.assessments?.[c.id];
+    plain.push(`  - ${c.name}: ${sc !== undefined ? sc + '/10' : '—'}`);
+  });
+  if (assessed.length) {
+    plain.push('');
+    plain.push('Feedback by Criterion:');
+    assessed.forEach(c => {
+      const sc = s.assessments[c.id];
+      plain.push(`  - ${c.name} (${getScoreBand(sc).label}): ${getAutoComment(c.id, sc)}`);
+    });
+  }
+  if (s.comments?.trim()) {
+    plain.push('');
+    plain.push("Teacher's Feedback:");
+    plain.push(`  ${s.comments.trim()}`);
+  }
+
+  // ---------- MARKDOWN ----------
+  const md = [];
+  md.push(`### ${s.name}${s.studentId ? ` (ID: ${s.studentId})` : ''}`);
+  if (unitName || groupName) md.push(`*${[unitName, groupName].filter(Boolean).join(' · ')}*`);
+  md.push(`**Total Score: ${total}/${marks}**`);
+  md.push('');
+  md.push('**Marking Breakdown**');
+  md.push('');
+  md.push('| Criterion | Score |');
+  md.push('| --- | --- |');
+  CRITERIA.forEach(c => {
+    const sc = s.assessments?.[c.id];
+    md.push(`| ${c.name} | ${sc !== undefined ? sc + '/10' : '—'} |`);
+  });
+  if (assessed.length) {
+    md.push('');
+    md.push('**Feedback by Criterion**');
+    md.push('');
+    assessed.forEach(c => {
+      const sc = s.assessments[c.id];
+      md.push(`- **${c.name}** _(${getScoreBand(sc).label})_: ${getAutoComment(c.id, sc)}`);
+    });
+  }
+  if (s.comments?.trim()) {
+    md.push('');
+    md.push("**Teacher's Feedback**");
+    md.push('');
+    md.push(s.comments.trim());
+  }
+
+  return { plain: plain.join('\n'), markdown: md.join('\n') };
+}
+
+function studentReportBlock(s, marks, unitName, groupName) {
   marks = marks ?? 10;
   const total = calcScore(s.assessments, marks);
   const criteriaHTML = CRITERIA.map(c => {
@@ -2309,11 +2452,21 @@ function studentReportBlock(s, marks) {
     ? `<div class="srb-teacher-comments"><strong>💬 Teacher's Feedback</strong>${esc(s.comments)}</div>`
     : '';
 
+  // Register copyable text for this student under a unique id
+  const cid = 'cp' + (_copyStoreSeq++);
+  _copyStore[cid] = buildStudentTransferText(s, marks, unitName, groupName);
+
   return `
     <div class="student-report-block">
       <div class="srb-header">
         <div><div class="srb-name">${esc(s.name)}</div>${s.studentId?`<div class="srb-id">ID: ${esc(s.studentId)}</div>`:''}</div>
-        <div class="srb-score">${total}/${marks}</div>
+        <div class="srb-header-right">
+          <div class="srb-score">${total}/${marks}</div>
+          <div class="srb-copy-wrap">
+            <button class="srb-copy-btn" onclick="copyStudentBlock('${cid}','plain',this)" title="Copy as plain text (for email, LMS, etc.)">📋 Copy</button>
+            <button class="srb-copy-btn srb-copy-btn-alt" onclick="copyStudentBlock('${cid}','markdown',this)" title="Copy as Markdown (for Notion, GitHub, docs, etc.)">⤓ MD</button>
+          </div>
+        </div>
       </div>
       <div class="srb-body">
         <div class="srb-criteria">${criteriaHTML}</div>
@@ -2321,6 +2474,52 @@ function studentReportBlock(s, marks) {
         ${teacherHTML}
       </div>
     </div>`;
+}
+
+// Copy a single student's breakdown+comments to the clipboard
+function copyStudentBlock(cid, fmt, btn) {
+  const entry = _copyStore[cid];
+  if (!entry) { toast('Nothing to copy','error'); return; }
+  const text = fmt === 'markdown' ? entry.markdown : entry.plain;
+  copyTextToClipboard(text, btn, fmt === 'markdown' ? '✓ MD copied' : '✓ Copied');
+}
+
+// Copy the entire currently-rendered report
+function copyEntireReport(fmt, btn) {
+  const ids = Object.keys(_copyStore);
+  if (!ids.length) { toast('Generate a detailed report first','error'); return; }
+  const sep = fmt === 'markdown' ? '\n\n---\n\n' : '\n\n──────────────────────\n\n';
+  const text = ids.map(id => fmt === 'markdown' ? _copyStore[id].markdown : _copyStore[id].plain).join(sep);
+  copyTextToClipboard(text, btn, fmt === 'markdown' ? '✓ All copied (MD)' : '✓ All copied');
+}
+
+// Shared clipboard helper with graceful fallback + button feedback
+function copyTextToClipboard(text, btn, successLabel) {
+  const done = () => {
+    toast('Copied to clipboard','success');
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = successLabel || '✓ Copied';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1600);
+    }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed'; ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); cb && cb(); }
+  catch(e) { toast('Copy failed — please copy manually','error'); }
+  document.body.removeChild(ta);
 }
 
 function renderSummaryReport(data) {
@@ -2505,6 +2704,8 @@ function exportReportHTML() {
     .srb-header{background:#0f1e35;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
     .srb-name{font-size:1rem;font-weight:600;color:#fff}.srb-id{font-size:12px;color:rgba(255,255,255,.55)}
     .srb-score{font-size:1.2rem;font-weight:500;color:#1fc8c2}
+    .srb-copy-wrap{display:none}
+    .srb-header-right{display:flex;align-items:center;gap:14px}
     .srb-body{padding:14px 16px}
     .srb-criteria{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin-bottom:12px}
     .srb-criterion{display:flex;justify-content:space-between;padding:7px 10px;background:#f8f5ef;border-radius:7px;font-size:13px}
